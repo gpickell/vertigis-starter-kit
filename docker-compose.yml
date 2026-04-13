@@ -10,7 +10,7 @@ services:
       - home:/home
       - config:/config
     environment:
-      - PASSWORD=${ADMIN_INIT_SECRET:-}
+      - ADMIN_INIT=${ADMIN_INIT:-}
 
 volumes:
   ca-certs: {}
