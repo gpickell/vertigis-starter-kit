@@ -1,4 +1,2 @@
-docker-compose.yml
+*/docker-compose.yml
 node_modules
-!starter-kit/config/**
-!*-start/**

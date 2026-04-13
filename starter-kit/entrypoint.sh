@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-export PASSWORD=$(cat /run/secrets/admin-password)
+passwd_file=~/.admin-password
+[ -z "$PASSWORD" ] && export PASSWORD=$(cat "$passwd_file")
+[ -f "$passwd_file" ] || echo "$PASSWORD" > "$passwd_file"
 
 /usr/bin/entrypoint.sh /config \
     --bind-addr 0.0.0.0:8080 \
