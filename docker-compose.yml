@@ -10,7 +10,7 @@ services:
       - home:/home
       - config:/config
     environment:
-      - ADMIN_INIT=${ADMIN_INIT:-}
+      - ADMIN_INIT=test
 
 volumes:
   ca-certs: {}
