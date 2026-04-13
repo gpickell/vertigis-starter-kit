@@ -6,13 +6,13 @@ services:
       - 127.0.0.1:8080:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ca:/usr/local/share/ca-certificates       
+      - ca-certs:/usr/local/share/ca-certificates       
       - home:/home
       - config:/config
     environment:
       - PASSWORD=${ADMIN_PASSWORD:-}
 
 volumes:
-  ca: {}
+  ca-certs: {}
   config: {}
   home: {}
