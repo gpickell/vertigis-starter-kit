@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export PASSWORD=$(cat /run/secrets/admin-password)
+
 /usr/bin/entrypoint.sh /config \
     --bind-addr 0.0.0.0:8080 \
     --auth password \
