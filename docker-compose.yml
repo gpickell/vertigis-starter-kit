@@ -1,7 +1,6 @@
 services:
-  editor:
-    build:
-      context: starter-kit
+  starter-kit:
+    image: ghcr.io/gpickell/starter-kit/starter-kit:latest
     ports:
       - 127.0.0.1:8080:8080
     volumes:
@@ -9,8 +8,6 @@ services:
       - ca-certs:/usr/local/share/ca-certificates       
       - home:/home
       - config:/config
-    environment:
-      - ADMIN_INIT=test
 
 volumes:
   ca-certs: {}
