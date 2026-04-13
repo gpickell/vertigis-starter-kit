@@ -1,0 +1,27 @@
+services:
+  caddy:
+    image: caddy:2
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - type: volume
+        source: config
+        target: /etc/caddy/Caddyfile:ro
+        volume:
+          subpath: ingress/Caddyfile
+      - type: volume
+        source: config
+        target: /certs
+        volume:
+          subpath: certs
+    restart: unless-stopped
+
+volumes:
+  config:
+    external: true
+    name: vertigis-config
+  caddy_data: {}
+  caddy_config: {}
