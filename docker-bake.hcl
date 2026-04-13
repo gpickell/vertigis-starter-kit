@@ -26,9 +26,9 @@ target "image" {
     context    = item
 
     tags = [
-        "ghcr.io/${OWNER}/${REPO}-${item}:${REF_NAME}.${RUN_NUMBER}",
-        "ghcr.io/${OWNER}/${REPO}-${item}:${REF_NAME}",
-        "ghcr.io/${OWNER}/${REPO}-${item}:latest",
+        "ghcr.io/${OWNER}/${REPO}/${item}:${REF_NAME}.${RUN_NUMBER}",
+        "ghcr.io/${OWNER}/${REPO}/${item}:${REF_NAME}",
+        "ghcr.io/${OWNER}/${REPO}/${item}:latest",
     ]
 }
 

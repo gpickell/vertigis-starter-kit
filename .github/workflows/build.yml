@@ -32,7 +32,6 @@ jobs:
 
       - name: Build and push discovered Dockerfiles
         env:
-          REPO: ${{ github.repository }}
           OWNER: ${{ github.repository_owner }}
           REF_NAME: ${{ github.ref_name }}
           RUN_NUMBER: ${{ github.run_number }}
