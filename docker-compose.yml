@@ -5,11 +5,10 @@ services:
       - 127.0.0.1:8080:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ca-certs:/usr/local/share/ca-certificates       
       - home:/home
       - config:/config
+    restart: unless-stopped
 
 volumes:
-  ca-certs: {}
   config: {}
   home: {}

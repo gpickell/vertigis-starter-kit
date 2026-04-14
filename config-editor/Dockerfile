@@ -9,7 +9,6 @@ RUN adduser coder docker
 RUN apt install -y makepasswd
 USER coder
 RUN code-server --install-extension ms-azuretools.vscode-docker
-RUN code-server --install-extension venryx.vscode-vtools
 USER root
 COPY /entrypoint.sh /
 RUN chmod +x /entrypoint.sh
