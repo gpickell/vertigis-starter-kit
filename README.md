@@ -75,7 +75,7 @@ $ docker compose run --rm editor
 $ docker compose up -d
 ```
 
-You may now launch the editor: (here)[http://localhost:8080/]
+You may now launch the editor: [here](http://localhost:8080/)
 
 ## Updating the Starter Kit
 ```
