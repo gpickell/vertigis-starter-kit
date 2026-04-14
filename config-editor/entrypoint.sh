@@ -7,7 +7,7 @@ passwd_file=~/.admin-password
 [ -t 0 ] && exit 0
 
 [ -f "$passwd_file" ] || makepasswd --chars 32 > "$passwd_file"
-export PASSWORD=$(cat "$passwd_file")
+[ -z "$PASSWORD" ] && export PASSWORD=$(cat "$passwd_file")
 
 /usr/bin/entrypoint.sh /config \
     --bind-addr 0.0.0.0:8080 \
