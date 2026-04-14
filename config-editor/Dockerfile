@@ -6,8 +6,10 @@ WORKDIR /root
 RUN curl -fsSL https://get.docker.com -o get-docker.sh
 RUN sh get-docker.sh
 RUN adduser coder docker
+RUN apt install -y makepasswd
 USER coder
 RUN code-server --install-extension ms-azuretools.vscode-docker
+RUN code-server --install-extension venryx.vscode-vtools
 USER root
 COPY /entrypoint.sh /
 RUN chmod +x /entrypoint.sh

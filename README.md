@@ -12,6 +12,9 @@ Request a VM from IT and install one of these:
 - SUSE-based:
   - Open SUSE
   - SUSE Enterprise
+- Others:
+  - CentOS
+  - Arch Linux
 
 ## Notes on WSL
 You may test with WSL, but WSL is not a production worthy method for running

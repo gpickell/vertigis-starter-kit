@@ -6,6 +6,7 @@ passwd_file=~/.admin-password
 [ -t 0 ] && echo "$PASSWORD" > "$passwd_file"
 [ -t 0 ] && exit 0
 
+[ -f "$passwd_file" ] || makepasswd --chars 32 > "$passwd_file"
 export PASSWORD=$(cat "$passwd_file")
 
 /usr/bin/entrypoint.sh /config \
@@ -13,10 +14,6 @@ export PASSWORD=$(cat "$passwd_file")
     --auth password \
     --disable-telemetry \
     --disable-workspace-trust > /dev/null 2> /dev/null &
-
-if [ "$#" -gt 0 ]; then
-    exec "$@"
-fi
 
 trap exit INT TERM
 wait

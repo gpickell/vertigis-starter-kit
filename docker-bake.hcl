@@ -17,8 +17,10 @@ variable "RUN_NUMBER" {
 target "image" {
     matrix = {
         item = [
-            "scep-client",
-            "starter-kit"
+            "config-editor",
+            "container-fw-egress",
+            "dhcp-fw-ingress",
+            "scep-enrollment",
         ]
     }
 

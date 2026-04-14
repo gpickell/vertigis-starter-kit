@@ -1,6 +1,6 @@
 services:
-  starter-kit:
-    image: ghcr.io/gpickell/starter-kit/starter-kit:latest
+  editor:
+    image: ghcr.io/gpickell/starter-kit/config-editor:latest
     ports:
       - 127.0.0.1:8080:8080
     volumes:
