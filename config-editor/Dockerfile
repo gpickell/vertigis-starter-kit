@@ -12,7 +12,8 @@ COPY /entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 WORKDIR /root/.local/share/code-server/User
 COPY /settings.json ./
-WORKDIR /config
-COPY /config ./
+WORKDIR /
+COPY /examples/ /examples/
+COPY /.code-workspace /
 ENTRYPOINT ["/entrypoint.sh"]
 CMD []

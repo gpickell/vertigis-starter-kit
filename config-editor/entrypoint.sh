@@ -9,7 +9,7 @@ passwd_file=~/.admin-password
 [ -f "$passwd_file" ] || makepasswd --chars 32 > "$passwd_file"
 [ -z "$PASSWORD" ] && export PASSWORD=$(cat "$passwd_file")
 
-/usr/bin/entrypoint.sh /config \
+/usr/bin/entrypoint.sh /.code-workspace \
     --bind-addr 0.0.0.0:8080 \
     --auth password \
     --disable-telemetry \
