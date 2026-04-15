@@ -41,9 +41,6 @@ if [ ! -f /data/certmonger/.otp ]; then
         -f "$SCEP_DIR/cert.pem" \
         -k "$SCEP_DIR/privkey.pem" \
         -N "$name" "${args[@]}" \
-        -u digitalSignature \
-        -u keyEncipherment \
-        -U id-kp-serverAuth \
         -L "$SCEP_OTP" \
         -C /update.sh \
         -w || true
