@@ -6,11 +6,11 @@ mkdir -p /data /run/dbus
 
 # ingress firewall
 iptables -F INPUT
-iptables -P INPUT DROP
+iptables -P INPUT ACCEPT
+iptables -A INPUT -i eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -i eth0 -p tcp --dport 80  -j ACCEPT
 iptables -A INPUT -i eth0 -p tcp --dport 443 -j ACCEPT
 iptables -A INPUT -i eth0 -p tcp -j DROP
-iptables -P INPUT ACCEPT
 
 ip addr flush dev eth0
 dbus-daemon --system --fork --nopidfile

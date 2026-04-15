@@ -18,8 +18,8 @@ target "image" {
     matrix = {
         item = [
             "config-editor",
-            "container-fw-egress",
-            "dhcp-fw-ingress",
+            "dhcp-fw",
+            "egress-fw",
             "scep-enrollment",
         ]
     }
