@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "STACKS",
-            "path": "/opt"
+            "path": "/opt/stacks"
         },        
         {
             "name": "EXAMPLES",
