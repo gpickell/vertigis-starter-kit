@@ -4,7 +4,7 @@
 Request a VM from IT and install one of these:
 - Debian-based:
   - Debian
-  - Ubuntu
+  - Ubuntu __RECOMMENDED__
 - RHEL-based:
   - Alma
   - CentOS
@@ -13,29 +13,46 @@ Request a VM from IT and install one of these:
   - Open SUSE
   - SUSE Enterprise
 
+## Preperation: Provided by IT
+- SSH login credentials:
+  - You'll need `sudo` access unless the VM is already primed for running containers.
+- IP/DNS Assignment (for production):
+  - __SIMPLE__: Assigned static IP/DNS for host.
+  - __ADVANCED__: Assigned static IP/DNS for ingress container. __RECOMMENDED__
+  - __EXPERT__: DHCP-managed IP/DNS for ingress container.
+- Certificate Enrollment:
+  - ACME Server (if available)
+  - CERTSRV Server (if available)
+  - Server Web Cert (if ACME or CERTSRV are unavailable)
+    - `server.crt` PEM formatted
+    - `server.key` PEM formatted
+
+
 ## Notes on WSL
 You may test with WSL, but WSL is not a production worthy method for running
 software as contaienrs. Please make sure you use a real Linux VM and an Enterprise
 grade Linux distribution.
 
-## What you'll need (likely provided by IT)?
-- SSH login credentials for the Linux VM
-  - You'll need `sudo` access unless the VM is already primed for running containers.
-- IP Assignment Strategy:
-  - Assign Static IP/DNS for host (easiest)
-  - Allocate Static IP/DNS for ingress container (advanced)
-  - Allocate via DHCP (expert)
-- Certificate Enrollment Details:
-  - ACME Server (if available)
-  - SCEP Server (if available)
-  - Server Web Cert (if you cannot use ACME or SCEP)
-    - `server.crt` PEM formatted
-    - `server.key` PEM formatted
+
+## Notes for Hyper/V 
+- Enable interface sharing: `Set-VMNetworkAdapter -MacAddressSpoofing On`
+- Create an external virtual switch for the VM.
+
+
+## Modify your SSH Configuration `~/.ssh/config`
+Configure the SSH connection for your system:
+```
+Host containers
+    HostName containers-host-01.contoso.com
+    User gary
+    LocalForward 127.0.0.1:8080 127.0.0.1:8080    
+```
+
 
 ## Prepare your Linux Container Host
 ```
 # SSH: Login to Server
-$ ssh user@server
+$ ssh containers
 
 # Debian: Update your distribution
 $ sudo apt update
@@ -79,9 +96,17 @@ You may now launch the editor: [here](http://localhost:8080/)
 
 ## Updating the Starter Kit
 ```
-$ ssh -L 127.0.0.1:8080:localhost:8080 user@server
+$ ssh containers
 $ cd vertigis-starter-kit
 $ git pull
 $ docker compose pull
 $ docker compose up -d
+```
+
+## Simple Docker Compose File
+```
+```
+
+## Expert Docker Compose File
+```
 ```
