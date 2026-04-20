@@ -42,13 +42,14 @@ while true; do
             nsupdate -g /tmp/state
         fi
 
-        if [ -n "$NSUPDATE_KEY" ]; then
+        if [ -n "$NSUPDATE_KEY_FILE" ]; then
             echo "; nsupdate -k"
-            nsupdate -k "$NSUPDATE_KEY" /tmp/state
+            nsupdate -k "$NSUPDATE_KEY_FILE" /tmp/state
         fi
 
-        if [ -n "$NSUPDATE_SECRET" ]; then
+        if [ -n "$NSUPDATE_SECRET_FILE" ]; then
             echo "; nsupdate -y"
+            NSUPDATE_SECRET=$(cat "$NSUPDATE_SECRET_FILE")
             nsupdate -y "$NSUPDATE_SECRET" /tmp/state
         fi
 

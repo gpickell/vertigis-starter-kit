@@ -69,7 +69,7 @@ services:
     configs:
       # initial distribution liss
       - source: ca_bundle
-        target: /opt/ca_bundle
+        target: /opt/ca_bundle.pem
     restart: unless-stopped
 
 volumes:
@@ -206,9 +206,9 @@ services:
       # update using kerberos authentication
       NSUPDATE_KINIT: --password-file=/opt/secret user@CONTOSO.COM
       # update using key authentication
-      NSUPDATE_KEY: keyspec
+      NSUPDATE_KEY_FILE: /opt/secret
       # update using shared secret authentication
-      NSUPDATE_SECRET: /opt/secret
+      NSUPDATE_SECRET_FILE: /opt/secret
     configs:
       - source: nsupdate_secret
         target: /opt/secret
