@@ -2,7 +2,7 @@
 set -e
 
 rm -rf /tmp/* /run/dbus/* /var/run/avahi-daemon/*
-mkdir -p /data /run/dbus
+mkdir -p /run/dbus
 
 # ingress firewall
 iptables -F INPUT

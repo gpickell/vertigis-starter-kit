@@ -50,8 +50,8 @@ docker compose up -d
 
 ## ca-enroll
 Useful when you need to assemble and distribute a CA root trust bundle:
-- Consume CA trust anchors using Cert/PEM files
-- Consume CA trust anchors using Cert/PEM distribution points
+- Consume CA trust anchors using Cert/PEM files.
+- Consume CA trust anchors using Cert/PEM distribution points.
 - Offers coherent CA trust material for other containers.
 
 ### Compose Example
@@ -68,7 +68,8 @@ services:
       - certs_ca:/data
     configs:
       # initial distribution liss
-      - source: /opt/ca_bundle
+      - source: ca_bundle
+        target: /opt/ca_bundle
     restart: unless-stopped
 
 volumes:
@@ -112,13 +113,11 @@ services:
       # the DNS names for the csr/cert
       CERT_SAN: studio.contoso.com studio-prod.local
     volumes:
-      - certs_state:/data
-      - certs_server:/data/server
+      - certs_data:/data
     restart: unless-stopped
 
 volumes:
-  certs_state: {}
-  certs_server: {}
+  certs_data: {}
 ```
 
 ### Usage
@@ -207,7 +206,7 @@ services:
       # update using kerberos authentication
       NSUPDATE_KINIT: --password-file=/opt/secret user@CONTOSO.COM
       # update using key authentication
-      NSUPDATE_KEY: /opt/secret
+      NSUPDATE_KEY: keyspec
       # update using shared secret authentication
       NSUPDATE_SECRET: /opt/secret
     configs:
@@ -246,6 +245,7 @@ services:
       ALLOW_CIDRS: >
         10.0.0.0/8
         192.168.100.0/24
+    # manage the outgoing network traffic for the app container
     network_mode: service:my-app
     privileged: true
     restart: unless-stopped
