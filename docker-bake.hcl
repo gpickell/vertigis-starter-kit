@@ -18,9 +18,11 @@ target "image" {
     matrix = {
         item = [
             "config-editor",
+            "ca-enroll",
+            "cert-enroll",
             "dhcp-fw",
             "egress-fw",
-            "scep-enrollment",
+            "ns-update",
         ]
     }
 
