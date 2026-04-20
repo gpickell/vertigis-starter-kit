@@ -36,18 +36,19 @@ while true; do
         echo "$current" > /tmp/state
         
         if [ -n "$NSUPDATE_KINIT" ]; then
-            echo "; gssapi"
+            echo "; kinit"
             kinit $NSUPDATE_KINIT
+            echo "; nsupdate -g"
             nsupdate -g /tmp/state
         fi
 
         if [ -n "$NSUPDATE_KEY" ]; then
-            echo "; key"
+            echo "; nsupdate -k"
             nsupdate -k "$NSUPDATE_KEY" /tmp/state
         fi
 
         if [ -n "$NSUPDATE_SECRET" ]; then
-            echo "; secret"
+            echo "; nsupdate -y"
             nsupdate -y "$NSUPDATE_SECRET" /tmp/state
         fi
 
