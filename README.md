@@ -13,13 +13,13 @@ Request a VM from IT and install one of these:
   - Open SUSE
   - SUSE Enterprise
 
-## Preperation: Provided by IT
+## Preparation: Provided by IT
 - SSH login credentials:
   - You'll need `sudo` access unless the VM is already primed for running containers.
 - IP/DNS Assignment (for production):
   - __SIMPLE__: Assigned static IP/DNS for host.
-  - __ADVANCED__: Assigned static IP/DNS for ingress container. __RECOMMENDED__
-  - __EXPERT__: DHCP-managed IP/DNS for ingress container.
+  - __RECOMMENDED__: Assigned static IP/DNS for ingress container.
+  - __ADVANCED__: DHCP-managed IP/DNS for ingress container.
 - Certificate Enrollment:
   - ACME Server (if available)
   - CERTSRV Server (if available)
@@ -51,62 +51,56 @@ Host containers
 
 ## Prepare your Linux Container Host
 ```
-# SSH: Login to Server
+# login to server using SSH
 $ ssh containers
 
-# Debian: Update your distribution
+# Debian: update your distribution
 $ sudo apt update
 $ sudo apt upgrade
 $ sudo apt install git
 
-# RHEL: Update your distribution
+# RHEL: update your distribution
 $ sudo dnf update
 $ sudo dnf install git
 
-# Get Docker Engine
+# Docker Engine install
 $ curl -fsSL https://get.docker.com -o get-docker.sh
 $ sudo sh get-docker.sh
 
-# Ensure Docker is running
+# ensure `docker` is running
 $ sudo systemctl enable --now docker
 $ sudo docker ps
 
-# Add yourself as docker admin
+# add yourself as to the `docker` admin
 $ sudo usermod -aG docker $USER
 $ logout
 ```
 
-## Get the Starter Kit Running
-```
-# SSH: Login to Server (port forward admin port)
-$ ssh -L 127.0.0.1:8080:localhost:8080 user@server
+## Utility Containers
 
-# Get Starter Kit
-$ git clone --depth 1 https://github.com/gpickell/vertigis-starter-kit
-$ cd vertigis-starter-kit
+These utility containers are intended for operators who are setting up a host and need a few focused building blocks around editing, trust, certificates, networking, and DNS.
 
-# Set the password
-$ docker compose run --rm editor
+You do not need all of them.
 
-# Run the editor at 8080
-$ docker compose up -d
-```
+You may want to use the [`config-editor`](utils/README.md#config-editor) if you are just getting started.
 
-You may now launch the editor: [here](http://localhost:8080/)
+A more automated setup may also use:
+- [`ca-enroll`](utils/README.md#ca-enroll) to publish a CA trust bundle
+- [`cert-enroll`](utils/README.md#cert-enroll) to handle human-assisted certificate enrollment and renewal
+- [`dhcp-fw`](utils/README.md#dhcp-fw) to obtain an ingress address via DHCP
+- [`ns-update`](utils/README.md#ns-update) to keep DNS aligned with that address
+- [`egress-fw`](utils/README.md#egress-fw) to restrict outbound TCP access
 
-## Updating the Starter Kit
-```
-$ ssh containers
-$ cd vertigis-starter-kit
-$ git pull
-$ docker compose pull
-$ docker compose up -d
-```
+
 
 ## Simple Docker Compose File
 ```
 ```
 
-## Expert Docker Compose File
+## Recommended Docker Compose File
+```
+```
+
+## Advanced Docker Compose File
 ```
 ```
