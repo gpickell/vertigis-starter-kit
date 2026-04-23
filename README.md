@@ -52,28 +52,28 @@ Host containers
 ## Prepare your Linux Container Host
 ```bash
 # login to server using SSH
-$ ssh containers
+ssh containers
 
 # Debian: update your distribution
-$ sudo apt update
-$ sudo apt upgrade
-$ sudo apt install git
+sudo apt update
+sudo apt upgrade
+sudo apt install git
 
 # RHEL: update your distribution
-$ sudo dnf update
-$ sudo dnf install git
+sudo dnf update
+sudo dnf install git
 
 # Docker Engine install
-$ curl -fsSL https://get.docker.com -o get-docker.sh
-$ sudo sh get-docker.sh
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
 # ensure `docker` is running
-$ sudo systemctl enable --now docker
-$ sudo docker ps
+sudo systemctl enable --now docker
+sudo docker ps
 
 # add yourself as to the `docker` admin
-$ sudo usermod -aG docker $USER
-$ logout
+sudo usermod -aG docker $USER
+logout
 ```
 
 ## Utility Containers
