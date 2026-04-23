@@ -1,276 +1,242 @@
-/* Base Reset */
-* {
+/* ============================================================
+   VertiGIS Starter Kit — Minimal Dark Theme
+   ============================================================ */
+
+/* --- Palette --- */
+:root {
+  --bg:         #1e1e2e;
+  --surface:    #26263a;
+  --border:     #3a3a52;
+  --text:       #cdd6f4;
+  --muted:      #6c7086;
+  --accent:     #42a169;
+  --strong:     #89b4fa;
+  --em:         #f38ba8;
+  --code-bg:    #181825;
+  --code-text:  #cdd6f4;
+  --code-bar:   #2e2e45;
+  --comment:    #71b88e;
+}
+
+/* --- Reset --- */
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
+/* --- Base --- */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 16px;
-  line-height: 1.6;
-  color: #97979f;
-  background-color: #1e1e1e;
-  padding: 20px;
-  margin: 20px;
+  line-height: 1.65;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
 }
 
+/* --- Logo --- */
 .logo {
-    width: 300px;
-    height: auto;
+  display: block;
+  width: 260px;
+  margin: 0 auto 1rem;
 }
 
-/* Headings */
+/* --- Headings --- */
 h1, h2, h3, h4, h5, h6 {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  font-weight: bold;
   color: #f2f2f3;
-  border-bottom: 2px solid #333;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.8rem 0 0.5rem;
 }
 
 h1 {
-    margin-bottom: 0;
-    border-bottom: none;
-    text-align: center;
+  font-size: 1.9rem;
+  text-align: center;
+  border: none;
+  margin-bottom: 0.2rem;
 }
 
-/* Paragraphs */
-p {
-  margin-bottom: 1.2em;
-  text-align: justify;
+h2 {
+  font-size: 1.3rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
 }
 
-p code {
+h3 { font-size: 1.1rem; }
+h4 { font-size: 1rem; color: var(--muted); }
+
+/* --- Date --- */
+p.date {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0.2rem 0 1.5rem;
+}
+
+/* --- Paragraphs --- */
+p { margin-bottom: 1rem; }
+
+/* --- Links --- */
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* --- Inline emphasis --- */
+strong { color: var(--strong); font-weight: 600; }
+em     { color: var(--em); font-style: italic; }
+
+/* --- Lists --- */
+ul, ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+li { margin: 0.25rem 0; }
+li > ul,
+li > ol { margin-bottom: 0; }
+
+/* --- Inline code --- */
+code {
+  background: var(--code-bg);
+  color: #c9a8f0;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
   white-space: nowrap;
 }
 
-/* Links */
-a {
-  color: #42a169;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* Lists */
-ul, ol {
-  padding-left: 20px;
-}
-
-ul li {
-  list-style-type: disc;
-}
-
-ul li > ul li {
-    list-style-type: circle;
-}
-
-ol li {
-  list-style-type: decimal;
-}
-
-/* Tightened Code blocks */
+/* --- Block code --- */
 pre {
   position: relative;
-  background-color: #2e3440;
-  color: #eceff4;
-  padding: 12px;
-  border-radius: 5px;
-  margin-bottom: 1.2em;
-  border: 1px solid #4c566a;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.87rem;
+  line-height: 1.55;
+  padding: 2.6rem 1rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
   overflow-x: auto;
-  font-family: 'Consolas', 'Courier New', monospace;
-  padding-top: 58px;
-}
-
-code {
-  background-color: #2e3440;
-  color: #88c0d0;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Courier New', monospace;
+  margin-bottom: 1.2rem;
 }
 
 pre code {
   background: none;
-  padding: 0;
   color: inherit;
+  padding: 0;
+  font-size: inherit;
+  white-space: pre;
 }
 
+/* Language label tab */
 pre::before {
-  display: block;
+  content: 'CODE';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  background-color: #4c566a;
-  padding: 10px;
+  top: 0; left: 0; right: 0;
+  background: var(--code-bar);
+  color: var(--muted);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.8rem;
 }
 
-pre.sourceCode::before {
-  content: "CODE";
-}
+/* Language-specific labels — pandoc emits e.g. <pre class="sourceCode bash"> */
+pre.bash::before,            pre.sourceCode.bash::before            { content: 'BASH'; }
+pre.sh::before,              pre.sourceCode.sh::before              { content: 'TERMINAL'; }
+pre.powershell::before,      pre.sourceCode.powershell::before      { content: 'POWERSHELL'; }
+pre.yaml::before,            pre.sourceCode.yaml::before            { content: 'YAML'; }
+pre.json::before,            pre.sourceCode.json::before            { content: 'JSON'; }
+pre.caddy::before,           pre.sourceCode.caddy::before           { content: 'CADDYFILE'; }
+pre.ssh-config::before,      pre.sourceCode.ssh-config::before      { content: 'SSH CONFIG'; }
+pre.text::before,            pre.sourceCode.text::before            { content: 'EXAMPLE'; }
+pre.dockerfile::before,      pre.sourceCode.dockerfile::before      { content: 'DOCKERFILE'; }
+pre.go::before,              pre.sourceCode.go::before              { content: 'GO'; }
+pre.python::before,          pre.sourceCode.python::before          { content: 'PYTHON'; }
 
-pre.bash::before,
-pre.sourceCode.bash::before {
-  content: "BASH";
-}
+/* Syntax token colours (pandoc span classes) */
+span.co { color: var(--comment); }   /* comments   */
+span.kw { color: #89b4fa; }          /* keywords   */
+span.st { color: #a6e3a1; }          /* strings    */
+span.dv { color: #fab387; }          /* numbers    */
+span.at { color: #89dceb; }          /* attributes */
+span.op { color: #cdd6f4; }          /* operators  */
+span.fu { color: #89b4fa; }          /* functions  */
+span.va { color: #cdd6f4; }          /* variables  */
 
-pre.sh::before,
-pre.sourceCode.sh::before {
-  content: "TERMINAL";
-}
-
-pre.powershell::before,
-pre.sourceCode.powershell::before {
-  content: "POWERSHELL";
-}
-
-pre.cmd::before,
-pre.sourceCode.cmd::before {
-  content: "CMD";
-}
-
-pre.git::before,
-pre.sourceCode.git::before {
-  content: "GIT";
-}
-
-pre.yaml::before,
-pre.sourceCode.yaml::before {
-  content: "YAML";
-}
-
-pre.json::before,
-pre.sourceCode.json::before {
-  content: "JSON";
-}
-
-pre.dockerfile::before,
-pre.sourceCode.dockerfile::before {
-  content: "DOCKERFILE";
-}
-
-pre.inf::before,
-pre.sourceCode.inf::before {
-  content: "host.inf";
-}
-
-/* Code comments */
-span.co {
-  color: #71b88e;
-}
-
-/* Blockquotes */
+/* --- Blockquote --- */
 blockquote {
-  margin: 1.5em 0;
-  padding: 10px 20px;
-  background-color: #252526;
-  border-left: 5px solid #007acc;
-  color: #d4d4d4;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  margin: 1.2rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0 4px 4px 0;
 }
+blockquote p { margin: 0; }
 
-blockquote p {
-  margin: 0;
-}
-
-/* Tables */
+/* --- Tables --- */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1.5em;
+  margin-bottom: 1.2rem;
+  font-size: 0.9rem;
 }
-
 th, td {
-  padding: 10px;
-  border: 1px solid #333;
-  white-space: nowrap;
-}
-
-th {
-  background-color: #252526;
-  color: #d4d4d4;
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem;
   text-align: left;
 }
-
-/* Images */
-img {
-  max-width: 100%;
-  height: auto;
+th {
+  background: var(--surface);
+  color: #f2f2f3;
+  font-weight: 600;
 }
+tr:nth-child(even) td { background: rgba(255,255,255,.03); }
 
-/* Horizontal rule */
+/* --- HR --- */
 hr {
-  border: 0;
-  height: 1px;
-  background-color: #333;
-  margin: 2em 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
 }
 
-/* Inline elements */
-strong {
-  color: #5fa2d8;
-}
+/* --- Images --- */
+img { max-width: 100%; height: auto; }
 
-em {
-  color: #ce9178;
-}
-
-code {
-  color: #c587c0;
-}
-
-p.date {
-  font-style: italic;
-  text-align: center;
-  font-size: small;
-  color: #777;
-}
-
-/* Nav / TOC */
+/* --- Nav / TOC --- */
 nav {
-  margin: 1.5em 0;
-  padding: 1em 1.5em;
-  background-color: #252526;
-  border-left: 4px solid #42a169;
-  border-radius: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  padding: 0.8rem 1.25rem 0.8rem 1rem;
+  margin: 1.5rem 0;
 }
-
 nav h2 {
-  margin-top: 0;
-  border-bottom: none;
-  font-size: 1em;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #97979f;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border: none;
+  margin: 0 0 0.5rem;
 }
-
 nav ul {
-  margin-top: 0.5em;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
+nav li { margin: 0.15rem 0; }
+nav li > ul { padding-left: 1rem; margin-top: 0.1rem; }
+nav a { color: var(--text); font-size: 0.88rem; }
+nav a:hover { color: var(--accent); text-decoration: none; }
 
-nav li {
-  margin: 0.2em 0;
-}
-
-/* Responsive typography */
+/* --- Responsive --- */
 @media (max-width: 600px) {
-  body {
-    font-size: 14px;
-  }
-
-  h1 {
-    font-size: 1.75em;
-  }
-
-  h2 {
-    font-size: 1.5em;
-  }
-
-  .logo {
-    width: 200px;
-  }
+  body { font-size: 14px; padding: 1rem 1rem 3rem; }
+  .logo { width: 180px; }
 }

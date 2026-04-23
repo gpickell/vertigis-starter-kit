@@ -41,7 +41,7 @@ grade Linux distribution.
 
 ## Modify your SSH Configuration `~/.ssh/config`
 Configure the SSH connection for your system:
-```
+```ssh-config
 Host containers
     HostName containers-host-01.contoso.com
     User gary
@@ -50,7 +50,7 @@ Host containers
 
 
 ## Prepare your Linux Container Host
-```
+```bash
 # login to server using SSH
 $ ssh containers
 
@@ -101,7 +101,7 @@ The simplest production deployment: Caddy as the HTTPS ingress in front of Verti
 
 Create a working directory (e.g. `~/stacks/studio`) with the following files:
 
-```
+```text
 studio/
 ├── docker-compose.yml
 ├── Caddyfile
@@ -158,7 +158,7 @@ Then choose a Caddyfile below based on how your certificates are provisioned.
 
 Use this when IT provides a certificate (`server-crt.pem` / `server-key.pem`) directly. Place the PEM files in the `certs/` directory and reference them in the Caddyfile. `auto_https` is disabled because Caddy will not attempt ACME when TLS is configured manually.
 
-```
+```caddy
 apps.contoso.com {
     tls /certs/server-crt.pem /certs/server-key.pem
 
@@ -186,7 +186,7 @@ Caddy with a dedicated macvlan network interface, internal CA trust distribution
 
 Create a working directory (e.g. `~/stacks/studio`) with the following files:
 
-```
+```text
 studio/
 ├── docker-compose.yml
 ├── Caddyfile
@@ -268,7 +268,7 @@ configs:
 ```
 
 **Caddyfile**
-```
+```caddy
 {
     acme_ca https://acme.contoso.com/acme/directory
 }
@@ -312,7 +312,7 @@ Full Active Directory enterprise setup: DHCP-managed ingress IP, Kerberos DNS up
 
 Create a working directory (e.g. `~/stacks/studio`) with the following files:
 
-```
+```text
 studio/
 ├── docker-compose.yml
 ├── Caddyfile
@@ -476,7 +476,7 @@ configs:
 ```
 
 **Caddyfile**
-```
+```caddy
 my-studio.contoso.com {
     tls /certs/server/cert/fullchain.pem /certs/server/cert/privkey.pem
 
