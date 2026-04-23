@@ -67,7 +67,7 @@ services:
     volumes:
       - certs_ca:/data
     configs:
-      # initial distribution liss
+      # initial distribution list
       - source: ca_bundle
         target: /opt/ca_bundle.pem
     restart: unless-stopped
@@ -93,6 +93,59 @@ docker compose pull
 docker compose up -d
 ```
 
+## certsrv-ca
+Useful when your CA is a Windows Active Directory Certificate Services (CERTSRV) server:
+- Fetches the CA certificate chain from the CERTSRV web enrollment interface.
+- Outputs PEM files to a shared volume consumable by `ca-enroll`.
+- Uses Kerberos for authentication against the CERTSRV endpoint.
+
+### Compose Example
+```yaml
+services:
+  certsrv-ca:
+    image: ghcr.io/gpickell/starter-kit/certsrv-ca:latest
+    environment:
+      # base URL to Windows CERTSRV
+      CERTSRV_URL: https://ca.contoso.com
+      # kerberos keytab authentication
+      KINIT_KEYTAB_FILE: /opt/keytab
+      KINIT_PRINCIPAL: user@CONTOSO.COM
+    volumes:
+      - certs_ca:/data
+    configs:
+      - source: kinit_keytab
+        target: /opt/keytab
+    restart: unless-stopped
+
+volumes:
+  certs_ca: {}
+
+configs:
+  kinit_keytab:
+    file: kinit_keytab
+```
+
+### Usage
+```sh
+# start
+docker compose up -d
+
+# update
+docker compose pull
+docker compose up -d
+```
+
+### Integration with `ca-enroll`
+Mount the `certs_ca` volume as `/opt` in `ca-enroll` so the fetched CA certificates are picked up automatically:
+```yaml
+services:
+  ca-enroll:
+    volumes:
+      - certs_ca:/opt
+      - certs_bundle:/data
+```
+
+
 ## `cert-enroll`
 Useful when you want to partially automate certificate enrollment:
 - Can be useful if you can't use ACME.
@@ -106,7 +159,7 @@ services:
     environment:
       # which folder to manage
       CERT_DIR: /data/server
-      # ca/topic to notify via ntfy.sh
+      # ca label used to identify this request
       CERT_CA: web-server-sd87g8h7ds8sdt8h
       # the subject for the csr/cert
       CERT_SUBJECT: CN=server.example.local
@@ -131,25 +184,73 @@ docker compose up -d
 ```
 
 ### Operational guidance
-This container uses `ntfy` as the handoff point between the running container and the human who fulfills the certificate request.
+This container writes certificate requests to a shared data volume and polls until a certificate appears.
 
 Typical Flow:
 1. Start the container with a persistent certificate directory.
-2. The container generates or refreshes the request.
-3. Notifications are published to an ntfy topic.
-4. Some operator subscribes to that topic and receives the request details.
-5. Some operator completes the organization’s normal certificate issuance process.
-6. Some operator replies with the resulting certificate chain.
-7. The container picks it up and concludes the renewal/submission process.
+2. The container generates a CSR and writes it to `/data/request-*/csr.pem`.
+3. A CA label is written to `/data/request-*/nickname.txt` (from `CERT_CA`).
+4. The container polls until a certificate appears at `/data/request-*/cert.pem`.
+5. Once the certificate is present, the container loads it and begins tracking renewal.
 
-### About `ntfy`
-`ntfy` is a lightweight publish/subscribe notification system that works over simple HTTP requests. A user can subscribe through the ntfy web UI, mobile app, or other supported clients, which makes it convenient for lightweight human-assisted operational flows.
+To fulfill requests automatically for Windows CERTSRV, run `certsrv-submit` alongside this container.
+For other CAs, place the signed certificate at `cert.pem` in the request directory manually.
+
+
+## certsrv-submit
+Useful when you want to automatically fulfill `cert-enroll` requests via Windows CERTSRV:
+- Monitors the shared certificate data volume for pending requests from `cert-enroll`.
+- Submits each CSR to the CERTSRV web enrollment interface and fetches the issued certificate.
+- Writes the certificate back to the request directory for `cert-enroll` to pick up.
+- Uses Kerberos for authentication against the CERTSRV endpoint.
+
+### Compose Example
+```yaml
+services:
+  certsrv-submit:
+    image: ghcr.io/gpickell/starter-kit/certsrv-submit:latest
+    environment:
+      # base URL to Windows CERTSRV
+      CERTSRV_URL: https://ca.contoso.com
+      # must match CERT_CA in cert-enroll
+      CERTSRV_CA: web-server-sd87g8h7ds8sdt8h
+      # kerberos keytab authentication
+      KINIT_KEYTAB_FILE: /opt/keytab
+      KINIT_PRINCIPAL: user@CONTOSO.COM
+    volumes:
+      - certs_data:/data
+    configs:
+      - source: kinit_keytab
+        target: /opt/keytab
+    restart: unless-stopped
+
+volumes:
+  certs_data: {}
+
+configs:
+  kinit_keytab:
+    file: kinit_keytab
+```
+
+### Usage
+```sh
+# start
+docker compose up -d
+
+# update
+docker compose pull
+docker compose up -d
+```
+
+### Pairing with `cert-enroll`
+Both containers must share the same `certs_data` volume. `CERTSRV_CA` must match the `CERT_CA` value in `cert-enroll`.
 
 
 ## dhcp-fw
-Useful when you want to manage your own IP assignment:
-- If testing, bypass IT requirements.
-- If production, IT may want to manage IP assignments using DHCP controls.
+Useful when you want to manage network ingress for a container:
+- Obtain an IP address via DHCP and advertise the hostname.
+- Restrict inbound TCP traffic to HTTP (80) and HTTPS (443) only.
+- Advertise the container hostname via mDNS for local network discovery.
 
 ### Compose Example
 ```yaml
@@ -203,12 +304,18 @@ services:
       DNS_HOST: my-studio.contoso.com
       # the server that should perform the update
       DNS_SERVER: dc01.contoso.com
-      # update using kerberos authentication
-      NSUPDATE_KINIT: --password-file=/opt/secret user@CONTOSO.COM
-      # update using key authentication
-      NSUPDATE_KEY_FILE: /opt/secret
-      # update using shared secret authentication
-      NSUPDATE_SECRET_FILE: /opt/secret
+      # authentication (pick one method):
+
+      # kerberos keytab:
+      KINIT_KEYTAB_FILE: /opt/secret
+      KINIT_PRINCIPAL: host@CONTOSO.COM
+      # kerberos password file:
+      # KINIT_SECRET_FILE: /opt/secret
+      # KINIT_PRINCIPAL: host@CONTOSO.COM
+      # TSIG key file:
+      # NSUPDATE_KEY_FILE: /opt/secret
+      # TSIG shared secret:
+      # NSUPDATE_SECRET_FILE: /opt/secret
     configs:
       - source: nsupdate_secret
         target: /opt/secret

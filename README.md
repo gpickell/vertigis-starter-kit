@@ -30,7 +30,7 @@ Request a VM from IT and install one of these:
 
 ## Notes on WSL
 You may test with WSL, but WSL is not a production worthy method for running
-software as contaienrs. Please make sure you use a real Linux VM and an Enterprise
+software as containers. Please make sure you use a real Linux VM and an Enterprise
 grade Linux distribution.
 
 
@@ -86,8 +86,10 @@ You may want to use the [`config-editor`](utils/README.md#config-editor) if you 
 
 A more automated setup may also use:
 - [`ca-enroll`](utils/README.md#ca-enroll) to publish a CA trust bundle
-- [`cert-enroll`](utils/README.md#cert-enroll) to handle human-assisted certificate enrollment and renewal
-- [`dhcp-fw`](utils/README.md#dhcp-fw) to obtain an ingress address via DHCP
+- [`certsrv-ca`](utils/README.md#certsrv-ca) to fetch CA certificates from Windows CERTSRV
+- [`cert-enroll`](utils/README.md#cert-enroll) to handle certificate enrollment and renewal
+- [`certsrv-submit`](utils/README.md#certsrv-submit) to automatically fulfill cert-enroll requests via Windows CERTSRV
+- [`dhcp-fw`](utils/README.md#dhcp-fw) to obtain an ingress address via DHCP and enforce a port 80/443 firewall
 - [`ns-update`](utils/README.md#ns-update) to keep DNS aligned with that address
 - [`egress-fw`](utils/README.md#egress-fw) to restrict outbound TCP access
 
