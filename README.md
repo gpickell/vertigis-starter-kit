@@ -2,6 +2,7 @@
 
 ## Get a Linux Distribution
 Request a VM from IT and install one of these:
+
 - Debian-based:
   - Debian
   - Ubuntu __RECOMMENDED__
