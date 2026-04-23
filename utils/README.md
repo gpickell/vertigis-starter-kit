@@ -8,23 +8,6 @@ Useful when you want to manage your container stacks using a browser:
 - Manage the host Docker Engine from a browser session
 - View logs pertaining to containers.
 
-### Compose Example
-```yaml
-services:
-  editor:
-    image: ghcr.io/gpickell/starter-kit/config-editor:latest
-    ports:
-      - 127.0.0.1:8080:8080
-    volumes:
-      - /opt/stacks:/opt/stacks
-      - /var/run/docker.sock:/var/run/docker.sock
-      - home:/root
-    restart: unless-stopped
-
-volumes:
-  home: {}
-```
-
 ### Usage
 ```sh
 # initial setup
@@ -44,8 +27,39 @@ docker compose pull
 docker compose up -d
 ```
 
+### Environment Variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `PASSWORD` | Password for the web interface | Auto-generated (32 random characters) |
+
+### Volumes
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| `/opt/stacks` | host bind | `/opt/stacks` | Gives the browser editor direct read/write access to the compose files and configs managed on the host. Without this, you would have no way to edit or deploy your stacks from the UI. |
+| `/var/run/docker.sock` | host socket | `/var/run/docker.sock` | Allows the UI to manage the host Docker Engine — start/stop containers, tail logs, inspect images. Required for any Docker operation from the browser. |
+| `home` | named volume | `/root` | Persists the generated admin password, code-server user settings, and installed extensions across container restarts. Without this, every restart regenerates a new random password and loses editor state. |
+
 ### Links
 - [Launch Editor](https://localhost:8080/)
+
+### Compose Example
+```yaml
+services:
+  editor:
+    image: ghcr.io/gpickell/starter-kit/config-editor:latest
+    ports:
+      - 127.0.0.1:8080:8080
+    volumes:
+      - /opt/stacks:/opt/stacks
+      - /var/run/docker.sock:/var/run/docker.sock
+      - home:/root
+    restart: unless-stopped
+
+volumes:
+  home: {}
+```
 
 
 ## ca-enroll
@@ -53,6 +67,20 @@ Useful when you need to assemble and distribute a CA root trust bundle:
 - Consume CA trust anchors using Cert/PEM files.
 - Consume CA trust anchors using Cert/PEM distribution points.
 - Offers coherent CA trust material for other containers.
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `CHECK_URLS` | Space-separated list of URLs to fetch additional CA certificates from (optional) |
+
+### Volumes
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| `ca_dist` | named volume (rw) | `/data` | Output volume where the assembled, deduplicated CA bundle is written. Other containers (`certsrv-ca`, `certsrv-submit`) mount this read-only to get trusted CA certificates for validating HTTPS connections. |
+| `ca_root` | named volume (ro) | `/opt/root` | Input volume where other containers (e.g. `certsrv-ca`) drop raw CA certificate files. `ca-enroll` reads from here to incorporate them into the distributed bundle. |
+| `ca_bundle` config | Docker config (ro) | `/opt/ca_bundle.pem` | Seed PEM containing the initial set of CA certificates to include. Lets you pre-populate the bundle with org-specific roots without rebuilding the image. |
 
 ### Compose Example
 ```yaml
@@ -65,7 +93,8 @@ services:
         https://pki.example.local/roots.pem
         https://pki.example.local/extra-roots.pem
     volumes:
-      - certs_ca:/data
+      - ca_dist:/data
+      - ca_root:/opt/root:ro
     configs:
       # initial distribution list
       - source: ca_bundle
@@ -73,7 +102,8 @@ services:
     restart: unless-stopped
 
 volumes:
-  certs_ca: {}
+  ca_dist: {}
+  ca_root: {}
 
 configs:
   ca_bundle:
@@ -83,21 +113,30 @@ configs:
       -----END CERTIFICATE-----
 ```
 
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
-```
 
 ## certsrv-ca
 Useful when your CA is a Windows Active Directory Certificate Services (CERTSRV) server:
 - Fetches the CA certificate chain from the CERTSRV web enrollment interface.
 - Outputs PEM files to a shared volume consumable by `ca-enroll`.
 - Uses Kerberos for authentication against the CERTSRV endpoint.
+
+### Environment Variables
+
+| Variable | Description | Auth Path |
+|---|---|---|
+| `CERTSRV_URL` | Base URL to the Windows CERTSRV web enrollment interface | — |
+| `KINIT_PRINCIPAL` | Kerberos principal (`user@REALM`) | Kerberos |
+| `KINIT_KEYTAB_FILE` | Path to Kerberos keytab file | Kerberos keytab |
+| `KINIT_SECRET_FILE` | Path to file containing Kerberos password | Kerberos password |
+
+Set `KINIT_PRINCIPAL` with either `KINIT_KEYTAB_FILE` (keytab) or `KINIT_SECRET_FILE` (password).
+
+### Volumes
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| `ca_root` | named volume (rw) | `/data` | Output volume where downloaded CA certificates are written as PEM files. `ca-enroll` reads from this volume to assemble the distributed trust bundle. |
+| `ca_dist` | named volume (ro) | `/etc/ssl/certs` | Read-only CA bundle from `ca-enroll`, used to validate HTTPS connections to the CERTSRV server itself. Without this, `curl` cannot verify the server's TLS certificate when the CA is not publicly trusted. |
 
 ### Compose Example
 ```yaml
@@ -107,42 +146,27 @@ services:
     environment:
       # base URL to Windows CERTSRV
       CERTSRV_URL: https://ca.contoso.com
-      # kerberos keytab authentication
-      KINIT_KEYTAB_FILE: /opt/keytab
+      # kerberos service/user authentication
       KINIT_PRINCIPAL: user@CONTOSO.COM
+      KINIT_SECRET_FILE: /opt/kinit_passwd
+      # kerberos keytab authentication
+      # KINIT_PRINCIPAL: user@CONTOSO.COM
+      # KINIT_KEYTAB_FILE: /opt/keytab
     volumes:
-      - certs_ca:/data
+      - ca_dist:/etc/ssl/certs:ro
+      - ca_root:/data
     configs:
       - source: kinit_keytab
         target: /opt/keytab
     restart: unless-stopped
 
 volumes:
-  certs_ca: {}
+  ca_dist: {}
+  ca_root: {}
 
 configs:
-  kinit_keytab:
-    file: kinit_keytab
-```
-
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
-```
-
-### Integration with `ca-enroll`
-Mount the `certs_ca` volume as `/opt` in `ca-enroll` so the fetched CA certificates are picked up automatically:
-```yaml
-services:
-  ca-enroll:
-    volumes:
-      - certs_ca:/opt
-      - certs_bundle:/data
+  kinit_passwd:
+    file: kinit_passwd
 ```
 
 
@@ -150,6 +174,34 @@ services:
 Useful when you want to partially automate certificate enrollment:
 - Can be useful if you can't use ACME.
 - Can monitor and notify you when you need to take action.
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `CERT_DIR` | Directory where certificate state and files are stored |
+| `CERT_CA` | CA label identifying this request (matched by `certsrv-submit`) |
+| `CERT_SUBJECT` | X.509 subject DN for the CSR (e.g., `CN=server.example.local`) |
+| `CERT_SAN` | Space-separated list of Subject Alternative Names (DNS names) |
+
+### Operational guidance
+This container writes certificate requests to a shared data volume and polls until a certificate appears.
+
+Typical Flow:
+1. Start the container with a persistent certificate directory.
+2. The container generates a CSR and writes it to `/data/request-*/csr.pem`.
+3. A CA label is written to `/data/request-*/nickname.txt` (from `CERT_CA`).
+4. The container polls until a certificate appears at `/data/request-*/cert.pem`.
+5. Once the certificate is present, the container loads it and begins tracking renewal.
+
+To fulfill requests automatically for Windows CERTSRV, run `certsrv-submit` alongside this container.
+For other CAs, place the signed certificate at `cert.pem` in the request directory manually.
+
+### Volumes
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| `certs_data` | named volume (rw) | `/data` | Shared persistent volume for CSRs, issued certificates, private keys, and certmonger renewal state. Must be shared with `certsrv-submit` (or whichever tool fulfills the requests). Survives container restarts so in-progress enrollments and renewals are not lost. |
 
 ### Compose Example
 ```yaml
@@ -173,29 +225,6 @@ volumes:
   certs_data: {}
 ```
 
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
-```
-
-### Operational guidance
-This container writes certificate requests to a shared data volume and polls until a certificate appears.
-
-Typical Flow:
-1. Start the container with a persistent certificate directory.
-2. The container generates a CSR and writes it to `/data/request-*/csr.pem`.
-3. A CA label is written to `/data/request-*/nickname.txt` (from `CERT_CA`).
-4. The container polls until a certificate appears at `/data/request-*/cert.pem`.
-5. Once the certificate is present, the container loads it and begins tracking renewal.
-
-To fulfill requests automatically for Windows CERTSRV, run `certsrv-submit` alongside this container.
-For other CAs, place the signed certificate at `cert.pem` in the request directory manually.
-
 
 ## certsrv-submit
 Useful when you want to automatically fulfill `cert-enroll` requests via Windows CERTSRV:
@@ -203,6 +232,28 @@ Useful when you want to automatically fulfill `cert-enroll` requests via Windows
 - Submits each CSR to the CERTSRV web enrollment interface and fetches the issued certificate.
 - Writes the certificate back to the request directory for `cert-enroll` to pick up.
 - Uses Kerberos for authentication against the CERTSRV endpoint.
+
+### Environment Variables
+
+| Variable | Description | Auth Path |
+|---|---|---|
+| `CERTSRV_URL` | Base URL to the Windows CERTSRV web enrollment interface | — |
+| `CERTSRV_CA` | CA label to match — must equal `CERT_CA` in `cert-enroll` | — |
+| `KINIT_PRINCIPAL` | Kerberos principal (`user@REALM`) | Kerberos |
+| `KINIT_KEYTAB_FILE` | Path to Kerberos keytab file | Kerberos keytab |
+| `KINIT_SECRET_FILE` | Path to file containing Kerberos password | Kerberos password |
+
+Set `KINIT_PRINCIPAL` with either `KINIT_KEYTAB_FILE` (keytab) or `KINIT_SECRET_FILE` (password).
+
+### Pairing with `cert-enroll`
+Both containers must share the same `certs_data` volume. `CERTSRV_CA` must match the `CERT_CA` value in `cert-enroll`.
+
+### Volumes
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| `certs_data` | named volume (rw) | `/data` | Shared with `cert-enroll`. This container reads pending CSRs from `/data/request-*/csr.pem`, submits them to CERTSRV, and writes the issued certificate back as `cert.pem` so `cert-enroll` can pick it up. The handshake between the two containers happens entirely through this volume. |
+| `ca_dist` | named volume (ro) | `/etc/ssl/certs` | Read-only CA bundle from `ca-enroll`, used to validate HTTPS connections to the CERTSRV server. Same reason as `certsrv-ca` — required when the CA is internal and not publicly trusted. |
 
 ### Compose Example
 ```yaml
@@ -217,7 +268,11 @@ services:
       # kerberos keytab authentication
       KINIT_KEYTAB_FILE: /opt/keytab
       KINIT_PRINCIPAL: user@CONTOSO.COM
+      # kerberos password authentication
+      # KINIT_PRINCIPAL: user@CONTOSO.COM
+      # KINIT_SECRET_FILE: /opt/kinit_passwd
     volumes:
+      - ca_dist:/etc/ssl/certs:ro
       - certs_data:/data
     configs:
       - source: kinit_keytab
@@ -225,6 +280,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  ca_dist: {}
   certs_data: {}
 
 configs:
@@ -232,25 +288,24 @@ configs:
     file: kinit_keytab
 ```
 
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
-```
-
-### Pairing with `cert-enroll`
-Both containers must share the same `certs_data` volume. `CERTSRV_CA` must match the `CERT_CA` value in `cert-enroll`.
-
 
 ## dhcp-fw
 Useful when you want to manage network ingress for a container:
 - Obtain an IP address via DHCP and advertise the hostname.
 - Restrict inbound TCP traffic to HTTP (80) and HTTPS (443) only.
 - Advertise the container hostname via mDNS for local network discovery.
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `DHCP_HOSTNAME` | Hostname to advertise via DHCP |
+
+### Volumes
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| `dhcp_data` | named volume (rw) | `/var/lib/dhcpcd` | Persists the DHCP lease and client state across restarts. Without this, the container re-negotiates a new lease on every restart, which may result in a different IP address and break DNS or firewall rules that depend on a stable address. |
 
 ### Compose Example
 ```yaml
@@ -280,19 +335,31 @@ volumes:
   dhcp_data: {}
 ```
 
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
-```
-
 
 ## ns-update
 Useful when you want to manage your own IP assignment and update DNS appropriately.
+
+### Environment Variables
+
+| Variable | Description | Auth Path |
+|---|---|---|
+| `DNS_HOST` | Fully qualified hostname to register in DNS | — |
+| `DNS_SERVER` | DNS server that will perform the update | — |
+| `KINIT_PRINCIPAL` | Kerberos principal (`user@REALM`) | Kerberos |
+| `KINIT_KEYTAB_FILE` | Path to Kerberos keytab file | Kerberos keytab |
+| `KINIT_SECRET_FILE` | Path to file containing Kerberos password | Kerberos password |
+| `NSUPDATE_KEY_FILE` | Path to TSIG key file | TSIG key |
+| `NSUPDATE_SECRET_FILE` | Path to file containing TSIG shared secret | TSIG secret |
+
+Authentication (choose one): Kerberos keytab (`KINIT_PRINCIPAL` + `KINIT_KEYTAB_FILE`), Kerberos password (`KINIT_PRINCIPAL` + `KINIT_SECRET_FILE`), TSIG key (`NSUPDATE_KEY_FILE`), or TSIG secret (`NSUPDATE_SECRET_FILE`).
+
+### Volumes
+
+This container has no persistent volumes. Authentication secrets are delivered as Docker configs (read-only files injected at runtime), so no sensitive material is stored in a volume or baked into the image.
+
+| Mount | Type | Internal Path | Why |
+|---|---|---|---|
+| Auth secret config | Docker config (ro) | `/opt/secret` | Holds the keytab file, password, or TSIG key depending on the chosen auth method. Using a Docker config keeps secrets out of environment variables and out of the image layer. |
 
 ### Compose Example
 ```yaml
@@ -327,21 +394,21 @@ configs:
     file: nsupdate_secret
 ```
 
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
-```
-
 
 ## egress-fw
 Useful when you want to restrict outgoing requests:
 - Applies network level policy controls on a container.
 - Only allow access to specific systems.
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `ALLOW_CIDRS` | Space-separated list of CIDR blocks allowed for outbound TCP traffic |
+
+### Volumes
+
+This container has no volumes. It operates entirely at the network level — it joins the target container's network namespace via `network_mode: service:<name>` and installs `iptables` rules there. No persistent state is needed because the rules are re-applied fresh on each startup.
 
 ### Compose Example
 ```yaml
@@ -356,14 +423,4 @@ services:
     network_mode: service:my-app
     privileged: true
     restart: unless-stopped
-```
-
-### Usage
-```sh
-# start
-docker compose up -d
-
-# update
-docker compose pull
-docker compose up -d
 ```
