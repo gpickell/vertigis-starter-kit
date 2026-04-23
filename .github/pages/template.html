@@ -4,6 +4,60 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="$css-path$" />
+    <style>
+    /* --- Copy buttons --- */
+    .copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+        padding: 0.2rem 0.35rem;
+        border-radius: 3px;
+        color: var(--muted);
+        transition: color 0.15s, background 0.15s, opacity 0.15s;
+        user-select: none;
+    }
+    .copy-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    .copy-btn.ok    { color: var(--accent) !important; }
+
+    /* Whole-block button — floats in the language bar */
+    .copy-all {
+        position: absolute;
+        top: 0;
+        right: 0;
+        opacity: 0;
+        z-index: 1;
+    }
+    pre:hover .copy-all,
+    .copy-all.ok { opacity: 1; }
+
+    /* Per-line structure rebuilt by JS for sh/bash blocks */
+    .code-line {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        min-height: 1.55em;
+    }
+    .code-line .line-text {
+        flex: 1;
+        white-space: pre;
+    }
+    .code-line .copy-btn {
+        font-size: 0.82rem;
+        opacity: 0;
+        padding: 0 0.15rem;
+        flex-shrink: 0;
+    }
+    .code-line:hover .copy-btn,
+    .code-line .copy-btn.ok { opacity: 1; }
+
+    /* Always show on touch devices (no hover state) */
+    @media (hover: none) {
+        .copy-all           { opacity: 0.6; }
+        .code-line .copy-btn { opacity: 0.6; }
+    }
+    </style>
     <title>$title$</title>
 </head>
 <body>
@@ -15,5 +69,104 @@ $endif$$if(date)$    <p class="date">Updated on: $date$</p>
 $endif$$if(toc)$    <nav>
         <h2>Table of Contents</h2>
 $toc$    </nav>
-$endif$$body$</body>
+$endif$$body$
+    <script>
+    (function () {
+        var GLYPH_COPY = '⎘'; /* ⎘ */
+        var GLYPH_OK   = '✓'; /* ✓ */
+        var FLASH_MS   = 1500;
+
+        function flash(btn) {
+            btn.textContent = GLYPH_OK;
+            btn.classList.add('ok');
+            setTimeout(function () {
+                btn.textContent = GLYPH_COPY;
+                btn.classList.remove('ok');
+            }, FLASH_MS);
+        }
+
+        function copy(text, btn) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function () { flash(btn); });
+            } else {
+                /* Fallback for older browsers */
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.cssText = 'position:fixed;opacity:0';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(ta);
+                flash(btn);
+            }
+        }
+
+        function makeBtn(label, text) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'copy-btn';
+            btn.textContent = GLYPH_COPY;
+            btn.setAttribute('aria-label', label);
+            btn.addEventListener('click', function () { copy(text, btn); });
+            return btn;
+        }
+
+        /* ── Per-line copy for sh / bash ─────────────────────────────── */
+        document.querySelectorAll('pre.sh, pre.bash').forEach(function (pre) {
+            var code = pre.querySelector('code');
+            if (!code) return;
+
+            var lines = code.textContent.split('\n');
+            /* Pandoc appends a trailing newline — drop the resulting empty entry */
+            if (lines.length && lines[lines.length - 1] === '') lines.pop();
+
+            code.style.whiteSpace = 'normal'; /* divs handle their own spacing */
+            code.innerHTML = '';
+
+            lines.forEach(function (line) {
+                var row = document.createElement('div');
+                row.className = 'code-line';
+
+                var txt = document.createElement('span');
+                txt.className = 'line-text';
+
+                if (line === '') {
+                    /* Blank line: keep vertical rhythm, no button */
+                    txt.innerHTML = ' '; /* &nbsp; */
+                    row.classList.add('blank');
+                    row.appendChild(txt);
+                } else if (line.trimStart().charAt(0) === '#') {
+                    /* Comment: style it green, no button */
+                    txt.className += ' co';
+                    txt.textContent = line;
+                    row.classList.add('comment');
+                    row.appendChild(txt);
+                } else {
+                    /* Command: text + per-line copy button */
+                    txt.textContent = line;
+                    row.appendChild(txt);
+                    row.appendChild(makeBtn('Copy line', line));
+                }
+
+                code.appendChild(row);
+            });
+        });
+
+        /* ── Whole-block copy for everything else ────────────────────── */
+        document.querySelectorAll('pre').forEach(function (pre) {
+            if (pre.matches('pre.sh, pre.bash')) return;
+            var code = pre.querySelector('code');
+            if (!code) return;
+
+            var btn = makeBtn('Copy block', '');
+            btn.className += ' copy-all';
+            /* Re-read text at click time so it works after any DOM changes */
+            btn.addEventListener('click', function () {
+                copy(code.textContent.replace(/\n$/, ''), btn);
+            }, true); /* capture=true so our listener fires first */
+            pre.appendChild(btn);
+        });
+    })();
+    </script>
+</body>
 </html>
