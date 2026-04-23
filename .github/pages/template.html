@@ -162,7 +162,9 @@ $endif$$body$
             btn.className += ' copy-all';
             /* Re-read text at click time so it works after any DOM changes */
             btn.addEventListener('click', function () {
-                copy(code.textContent.replace(/\n$/, ''), btn);
+                var t = code.textContent;
+                if (t.charAt(t.length - 1) === '\n') t = t.slice(0, -1);
+                copy(t, btn);
             }, true); /* capture=true so our listener fires first */
             pre.appendChild(btn);
         });
