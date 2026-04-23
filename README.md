@@ -82,16 +82,16 @@ These utility containers are intended for operators who are setting up a host an
 
 You do not need all of them.
 
-You may want to use the [`config-editor`](utils/README.md#config-editor) if you are just getting started.
-
-A more automated setup may also use:
-- [`ca-enroll`](utils/README.md#ca-enroll) to publish a CA trust bundle
-- [`certsrv-ca`](utils/README.md#certsrv-ca) to fetch CA certificates from Windows CERTSRV
-- [`cert-enroll`](utils/README.md#cert-enroll) to handle certificate enrollment and renewal
-- [`certsrv-submit`](utils/README.md#certsrv-submit) to automatically fulfill cert-enroll requests via Windows CERTSRV
-- [`dhcp-fw`](utils/README.md#dhcp-fw) to obtain an ingress address via DHCP and enforce a port 80/443 firewall
-- [`ns-update`](utils/README.md#ns-update) to keep DNS aligned with that address
-- [`egress-fw`](utils/README.md#egress-fw) to restrict outbound TCP access
+| Container | Purpose |
+|---|---|
+| [`config-editor`](utils/README.md#config-editor) | Web UI to edit compose files, manage containers, and view logs — start here |
+| [`ca-enroll`](utils/README.md#ca-enroll) | Assemble and distribute a CA root trust bundle |
+| [`certsrv-ca`](utils/README.md#certsrv-ca) | Fetch CA certificates from Windows CERTSRV |
+| [`cert-enroll`](utils/README.md#cert-enroll) | Handle certificate enrollment and renewal |
+| [`certsrv-submit`](utils/README.md#certsrv-submit) | Auto-fulfill cert-enroll requests via Windows CERTSRV |
+| [`dhcp-fw`](utils/README.md#dhcp-fw) | Obtain an ingress IP via DHCP; enforce port 80/443 firewall |
+| [`ns-update`](utils/README.md#ns-update) | Keep DNS aligned with the DHCP-assigned address |
+| [`egress-fw`](utils/README.md#egress-fw) | Restrict outbound TCP access |
 
 
 
