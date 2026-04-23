@@ -38,7 +38,7 @@ jobs:
           DATE="$(date +'%b %d, %Y')"
           docker run --rm \
             -v "$PWD:/data" -w /data \
-            pandoc/pandoc:latest \
+            pandoc/core:latest \
               README.md \
               --from=markdown+smart \
               --to=html5 \
@@ -58,7 +58,7 @@ jobs:
           DATE="$(date +'%b %d, %Y')"
           docker run --rm \
             -v "$PWD:/data" -w /data \
-            pandoc/pandoc:latest \
+            pandoc/core:latest \
               utils/README.md \
               --from=markdown+smart \
               --to=html5 \
