@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="$css-path$" />
+    <title>$title$</title>
+</head>
+<body>
+    <div>
+        <img src="$logo-path$" alt="VertiGIS Studio" class="logo" />
+    </div>
+$if(title)$    <h1>$title$</h1>
+$endif$$if(date)$    <p class="date">Updated on: $date$</p>
+$endif$$if(toc)$    <nav>
+        <h2>Table of Contents</h2>
+$toc$    </nav>
+$endif$$body$</body>
+</html>

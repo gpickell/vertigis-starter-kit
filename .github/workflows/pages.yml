@@ -1,0 +1,90 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare output directories
+        run: mkdir -p dist/utils
+
+      - name: Copy static assets
+        run: |
+          cp .github/pages/README.css dist/
+          cp .github/pages/vertigis-studio-logo.svg dist/
+
+      - name: Render root README
+        run: |
+          DATE="$(date +'%b %d, %Y')"
+          docker run --rm \
+            -v "$PWD:/data" -w /data \
+            pandoc/pandoc:latest \
+              README.md \
+              --from=markdown+smart \
+              --to=html5 \
+              --standalone \
+              --template=.github/pages/template.html \
+              --lua-filter=.github/pages/strip-title.lua \
+              --toc --toc-depth=2 \
+              --highlight-style=breezedark \
+              --variable="css-path:README.css" \
+              --variable="logo-path:vertigis-studio-logo.svg" \
+              --variable="date:$DATE" \
+              --metadata=title:"VertiGIS Starter Kit" \
+              --output=dist/index.html
+
+      - name: Render utils README
+        run: |
+          DATE="$(date +'%b %d, %Y')"
+          docker run --rm \
+            -v "$PWD:/data" -w /data \
+            pandoc/pandoc:latest \
+              utils/README.md \
+              --from=markdown+smart \
+              --to=html5 \
+              --standalone \
+              --template=.github/pages/template.html \
+              --lua-filter=.github/pages/strip-title.lua \
+              --toc --toc-depth=3 \
+              --highlight-style=breezedark \
+              --variable="css-path:../README.css" \
+              --variable="logo-path:../vertigis-studio-logo.svg" \
+              --variable="date:$DATE" \
+              --metadata=title:"VertiGIS Starter Kit — Utilities" \
+              --output=dist/utils/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
