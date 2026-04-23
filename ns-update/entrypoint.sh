@@ -35,9 +35,16 @@ while true; do
         echo "$current"        
         echo "$current" > /tmp/state
         
-        if [ -n "$NSUPDATE_KINIT" ]; then
+        if [ -n "$KINIT_KEYTAB_FILE" ]; then
             echo "; kinit"
-            kinit $NSUPDATE_KINIT
+            kinit -k -t "$KINIT_KEYTAB_FILE" "$KINIT_PRINCIPAL" > /dev/null
+            echo "; nsupdate -g"
+            nsupdate -g /tmp/state
+        fi
+
+        if [ -n "$KINIT_SECRET_FILE" ]; then
+            echo "; kinit"
+            cat "$KINIT_SECRET_FILE" | kinit "$KINIT_PRINCIPAL" > /dev/null
             echo "; nsupdate -g"
             nsupdate -g /tmp/state
         fi

@@ -20,6 +20,8 @@ target "image" {
             "config-editor",
             "ca-enroll",
             "cert-enroll",
+            "certsrv-ca",
+            "certsrv-submit",
             "dhcp-fw",
             "egress-fw",
             "ns-update",

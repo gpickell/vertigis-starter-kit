@@ -13,12 +13,6 @@ die_unreachable() {
 }
 
 issued() {
-    envsubst < /success.md > /tmp/success.md
-    curl -sS "https://ntfy.sh/$CERTMONGER_CA_NICKNAME" \
-        -H "Markdown: yes" \
-        -H "Priority: high" \
-        -T /tmp/success.md > /dev/null 2> /dev/null
-
     rm -rf "$DIR"
     exit 0
 }
@@ -34,47 +28,30 @@ submit() {
     export DIR="/data/$CERTMONGER_CA_COOKIE"
     mkdir -p "$DIR"
     echo "$CERTMONGER_CSR" > "$DIR/csr.pem"
-    env > "/tmp/env-submit"
-
-    envsubst < /renew.md > /tmp/renew.md
-    curl -sS "https://ntfy.sh/$CERTMONGER_CA_NICKNAME" \
-        -H "Markdown: yes" \
-        -H "Priority: high" \
-        -T /tmp/renew.md > /dev/null 2> /dev/null
+    echo "$CERTMONGER_CA_NICKNAME" > "$DIR/nickname.txt"
 
     wait_more
 }
 
 poll() {
     export DIR="/data/$CERTMONGER_CA_COOKIE"
-    env > "/tmp/env-poll"
 
     if [ ! -d "$DIR" ]; then
         die_rejected
     fi
 
-    curl -fsSL "https://ntfy.sh/$CERTMONGER_CA_COOKIE/json?poll=1" > /tmp/reply.json 2> /dev/null
-    jq -r .attachment.url /tmp/reply.json > /tmp/attachment.url 2> /dev/null
+    in_file="$DIR/cert.pem"
+    result_file=/tmp/result/fullchain.pem
 
-    url=$(cat /tmp/attachment.url)
-    url=${url#null}
-
-    if [ -n "$url" ]; then
-        curl -fsSL "$url" > /tmp/cert.pem 2> /dev/null
-    fi
-    
-    file=/tmp/cert.pem
-    [ -f "$DIR/cert.pem" ] && file="$DIR/cert.pem"
-    
-    if openssl pkcs7 -in "$file" -out "$DIR/fullchain.pem" -print_certs 2> /dev/null; then
-        cp "$DIR/fullchain.pem" /tmp/result/fullchain.pem
-        cat "$file"
+    if openssl pkcs7 -in "$in_file" -out "$DIR/fullchain.pem" -print_certs 2> /dev/null; then
+        cp "$DIR/fullchain.pem" "$result_file"
+        cat "$in_file"
         issued
     fi
 
-    if openssl x509 -in "$file" -noout 2> /dev/null; then
-        cp "$file" /tmp/result/fullchain.pem
-        cat "$file"
+    if openssl x509 -in "$in_file" -noout 2> /dev/null; then
+        cp "$in_file" "$result_file"
+        cat "$in_file"
         issued
     fi
 

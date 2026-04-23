@@ -1,6 +1,7 @@
 #!/bin/bash
-shopt -s nullglob
+shopt -s nullglob globstar
 
+delay=30s
 while true; do
   cd /
   mkdir -p /data/ca-certificates
@@ -32,5 +33,9 @@ while true; do
   rsync -rlc /usr/local/share/ca-certificates/ ca-certificates/
   rsync -rlc --delete --itemize-changes ./ /data/
 
-  sleep 1h
+  sleep $delay
+  
+  if [ $delay = 30s ]; then
+    delay=1d
+  fi
 done
