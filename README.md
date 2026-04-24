@@ -346,7 +346,7 @@ services:
       KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
       KINIT_SECRET_FILE: /opt/secret
     configs:
-      - source: ns_secret
+      - source: kinit_secret
         target: /opt/secret
     network_mode: service:dhcp-fw
     restart: unless-stopped
