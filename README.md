@@ -318,8 +318,7 @@ studio/
 ├── docker-compose.yml
 ├── Caddyfile
 ├── ca_bundle.pem      ← root CA cert from IT (PEM, seed trust — see notes)
-├── certsrv_keytab     ← Kerberos keytab for CERTSRV access
-└── ns_keytab          ← Kerberos keytab for DNS updates
+└── kinit_secret       ← Kerberos secret for user authentication
 ```
 
 **docker-compose.yml**
@@ -345,9 +344,9 @@ services:
       DNS_HOST: my-studio.contoso.com
       DNS_SERVER: dc01.contoso.com
       KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
-      KINIT_KEYTAB_FILE: /opt/secret
+      KINIT_SECRET_FILE: /opt/secret
     configs:
-      - source: ns_keytab
+      - source: ns_secret
         target: /opt/secret
     network_mode: service:dhcp-fw
     restart: unless-stopped
@@ -357,13 +356,13 @@ services:
     environment:
       CERTSRV_URL: https://ca.contoso.com
       KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
-      KINIT_KEYTAB_FILE: /opt/keytab
+      KINIT_SECRET_FILE: /opt/secret
     volumes:
       - ca_dist:/etc/ssl/certs:ro
       - ca_root:/data
     configs:
-      - source: certsrv_keytab
-        target: /opt/keytab
+      - source: certsrv_secret
+        target: /opt/secret
     restart: unless-stopped
 
   ca-enroll:
@@ -393,13 +392,13 @@ services:
       CERTSRV_URL: https://ca.contoso.com
       CERTSRV_CA: studio-web
       KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
-      KINIT_KEYTAB_FILE: /opt/keytab
+      KINIT_SECRET_FILE: /opt/secret
     volumes:
       - ca_dist:/etc/ssl/certs:ro
       - certs_data:/data
     configs:
-      - source: certsrv_keytab
-        target: /opt/keytab
+      - source: certsrv_secret
+        target: /opt/secret
     restart: unless-stopped
 
   caddy:
@@ -470,10 +469,8 @@ volumes:
 configs:
   ca_bundle:
     file: ca_bundle.pem
-  certsrv_keytab:
-    file: certsrv_keytab
-  ns_keytab:
-    file: ns_keytab
+  kinit_secret:
+    file: kinit_secret
 ```
 
 **Caddyfile**
@@ -493,8 +490,8 @@ my-studio.contoso.com {
 - **`parent: eth0`**: Replace with the actual host NIC name (`ip link` to find it). Must be the interface on the VLAN that Studio's IP will live on.
 - **`subnet` / `gateway`**: Match your VLAN. If IT assigns Caddy a static IP via DHCP reservation the gateway must be correct or `dhcp-fw` will lose the lease.
 - **`ca_bundle.pem`**: Seed PEM needed to bootstrap trust before `certsrv-ca` can run. Download the root CA from ADCS at `https://ca.contoso.com/certsrv/certcarc.asp` (no authentication required) or ask IT for the root PEM. Once `certsrv-ca` is running it fetches the full chain and `ca-enroll` keeps the bundle current.
-- **`certsrv_keytab`**: Shared by `certsrv-ca` (fetches CA certs) and `certsrv-submit` (submits CSRs). The account needs CA read permission and Enrollment Agent rights on ADCS. Generate with `ktpass` on the domain controller.
-- **`ns_keytab`**: Account that is allowed to write the DNS A record for the hostname. Can also use a TSIG key — see the `ns-update` docs for alternatives.
+- **`certsrv_secret`**: Shared by `certsrv-ca` (fetches CA certs) and `certsrv-submit` (submits CSRs). The account needs CA read permission and Enrollment Agent rights on ADCS. Generate with `ktpass` on the domain controller.
+- **`ns_secret`**: Account that is allowed to write the DNS A record for the hostname. Can also use a TSIG key — see the `ns-update` docs for alternatives.
 - **`CERT_CA` / `CERTSRV_CA`**: Must be identical (`studio-web` above). Use a unique label per service so `certsrv-submit` routes requests to the right CA.
 - **`ALLOW_CIDRS`**: Tighten to the actual ranges Studio must reach — GIS tile services, license servers, LDAP/AD, SMTP, etc. `10.0.0.0/8` is a reasonable starting point for a private network; remove the RFC-1918 ranges that don't apply to your environment.
 - **First-time startup**: `cert-enroll` must complete enrollment before Caddy can serve HTTPS. Caddy will restart once or twice on first deploy while it waits for the certificate. The cert is persisted in `certs_data` so all subsequent restarts are immediate.

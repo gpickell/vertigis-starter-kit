@@ -147,17 +147,17 @@ services:
       # base URL to Windows CERTSRV
       CERTSRV_URL: https://ca.contoso.com
       # kerberos service/user authentication
-      KINIT_PRINCIPAL: user@CONTOSO.COM
-      KINIT_SECRET_FILE: /opt/kinit_passwd
+      KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
+      KINIT_SECRET_FILE: /opt/secret
       # kerberos keytab authentication
-      # KINIT_PRINCIPAL: user@CONTOSO.COM
-      # KINIT_KEYTAB_FILE: /opt/keytab
+      # KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
+      # KINIT_KEYTAB_FILE: /opt/secret
     volumes:
       - ca_dist:/etc/ssl/certs:ro
       - ca_root:/data
     configs:
-      - source: kinit_keytab
-        target: /opt/keytab
+      - source: kinit_secret
+        target: /opt/secret
     restart: unless-stopped
 
 volumes:
@@ -165,8 +165,8 @@ volumes:
   ca_root: {}
 
 configs:
-  kinit_passwd:
-    file: kinit_passwd
+  kinit_secret:
+    file: kinit_secret
 ```
 
 
@@ -265,18 +265,18 @@ services:
       CERTSRV_URL: https://ca.contoso.com
       # must match CERT_CA in cert-enroll
       CERTSRV_CA: web-server-sd87g8h7ds8sdt8h
-      # kerberos keytab authentication
-      KINIT_KEYTAB_FILE: /opt/keytab
-      KINIT_PRINCIPAL: user@CONTOSO.COM
       # kerberos password authentication
-      # KINIT_PRINCIPAL: user@CONTOSO.COM
-      # KINIT_SECRET_FILE: /opt/kinit_passwd
+      KINIT_SECRET_FILE: /opt/secret
+      KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
+      # kerberos keytab authentication
+      # KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
+      # KINIT_KEYTAB_FILE: /opt/secret
     volumes:
       - ca_dist:/etc/ssl/certs:ro
       - certs_data:/data
     configs:
-      - source: kinit_keytab
-        target: /opt/keytab
+      - source: kinit_secret
+        target: /opt/secret
     restart: unless-stopped
 
 volumes:
@@ -284,8 +284,8 @@ volumes:
   certs_data: {}
 
 configs:
-  kinit_keytab:
-    file: kinit_keytab
+  kinit_secret:
+    file: kinit_secret
 ```
 
 
@@ -373,12 +373,12 @@ services:
       DNS_SERVER: dc01.contoso.com
       # authentication (pick one method):
 
-      # kerberos keytab:
-      KINIT_KEYTAB_FILE: /opt/secret
-      KINIT_PRINCIPAL: host@CONTOSO.COM
       # kerberos password file:
-      # KINIT_SECRET_FILE: /opt/secret
-      # KINIT_PRINCIPAL: host@CONTOSO.COM
+      KINIT_SECRET_FILE: /opt/secret
+      KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
+      # kerberos keytab:
+      # KINIT_KEYTAB_FILE: /opt/secret
+      # KINIT_PRINCIPAL: svc-containers@CONTOSO.COM
       # TSIG key file:
       # NSUPDATE_KEY_FILE: /opt/secret
       # TSIG shared secret:
