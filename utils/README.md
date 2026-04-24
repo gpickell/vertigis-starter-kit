@@ -384,14 +384,14 @@ services:
       # TSIG shared secret:
       # NSUPDATE_SECRET_FILE: /opt/secret
     configs:
-      - source: nsupdate_secret
+      - source: kinit_secret
         target: /opt/secret
     network_mode: service:dhcp-fw
     restart: unless-stopped
 
 configs:
-  nsupdate_secret:
-    file: nsupdate_secret
+  kinit_secret:
+    file: kinit_secret
 ```
 
 
