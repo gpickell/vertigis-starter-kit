@@ -1,5 +1,69 @@
 # VertiGIS Starter Kit
 
+## What Is a Container Host?
+
+A **container host** is a Linux machine whose sole job is to run Docker. You do not install applications on it the way you would on a Windows Server — instead, you run **containers**, and the containers are the applications.
+
+If you have spent your career on Windows, this guide is written for you. The concepts map more directly than they first appear.
+
+### The Windows mental model vs. the container mental model
+
+| Windows concept | Container equivalent |
+|---|---|
+| A Windows Server VM | The container host (Linux VM) |
+| IIS / Windows Service | Docker Engine |
+| An application installed on the server | A container |
+| An MSI or installer package | A container image |
+| `C:\inetpub\wwwroot` or a data directory | A Docker volume |
+| IIS application pool isolation | Container isolation |
+| A deployment runbook or App-V manifest | A `docker-compose.yml` file |
+| `services.msc` | `docker ps` / `docker compose` |
+| RDP to manage the server | SSH to manage the host |
+
+The key shift: the host itself holds almost no configuration. All configuration lives in the files you place in your working directory (compose files, Caddyfiles, certificates). When something goes wrong you do not log in and click through a GUI — you edit a file and restart the stack.
+
+### Containers and images
+
+An **image** is a read-only, versioned package — think of it like an MSI that already contains the application, its runtime, and all its dependencies bundled together. When Docker starts a container it creates an isolated running instance from that image, similar to how IIS spins up an application pool from a compiled site.
+
+Because the image is immutable, the container is **disposable**. You never patch inside a running container the way you would on a Windows Server. Instead you pull a newer image and restart. The application's state lives in volumes (persistent storage that survives container restarts), not inside the container itself.
+
+### Container networking
+
+Docker virtualizes networking the same way a hypervisor virtualizes hardware. Each stack gets one or more **virtual networks** — software-defined bridges that behave like a private LAN. Containers attached to the same virtual network can reach each other freely; containers on different networks cannot, even if they are running on the same host. This is isolation by default, not by configuration.
+
+Within a virtual network, Docker runs an embedded DNS resolver. Every container is automatically registered by its service name. When Caddy needs to forward a request to Studio it connects to `http://studio:8080` — Docker resolves `studio` to Studio's address on the virtual network transparently, with no hosts file entries, no static IPs, and no DNS records to manage. This is why that address appears throughout the Caddyfiles in this guide.
+
+### What is a stack?
+
+A **stack** is one `docker-compose.yml` file and the set of containers it defines — typically one logical application and its supporting services. This guide's example stacks contain Caddy (HTTPS ingress), VertiGIS Studio, and a handful of supporting containers for certificates, DNS, and firewall rules. All containers in a stack share a virtual network and find each other by service name.
+
+### One host, one stack — or many
+
+A container host can run a single stack or many stacks side by side. Both are valid:
+
+**Single stack** — simplest to operate. One application owns the host. All resources (CPU, RAM, disk) are available to it. Failure blast radius is contained to one application. Most teams start here.
+
+**Multiple stacks** — more efficient use of hardware. Each stack lives in its own subdirectory under `/opt/stacks` (or wherever you choose), has its own compose file, and runs independently. Stacks share the host's Docker Engine but are otherwise isolated from each other. Managing multiple stacks on one host is more advanced but not significantly harder once the first one is running — the patterns are identical.
+
+### Why Linux, not Windows Server?
+
+Docker originated on Linux and Linux containers remain the dominant production target. On Windows Server, Docker can only run Windows containers (which are heavier, less portable, and have a much smaller ecosystem) or Linux containers via a compatibility layer (Hyper-V isolation) that adds overhead and restrictions. On a Linux VM, Docker runs natively with no translation layer — images are smaller, startup is faster, and every public image works without modification.
+
+WSL on your developer workstation is a reasonable way to experiment, but it is not a production-grade container host. See [Notes on WSL](#notes-on-wsl) below.
+
+### What you actually do day-to-day
+
+Once the host is running you rarely SSH into it except to update images or troubleshoot. Your day-to-day interaction is:
+
+1. Edit compose files and configuration in your working directory.
+2. Run `docker compose up -d` to apply changes.
+3. Run `docker compose logs -f` to watch output.
+4. Run `docker compose pull && docker compose up -d` to update to newer images.
+
+The host OS is deliberately boring. Keep it patched, keep Docker running, and let the containers do the work.
+
+
 ## Get a Linux Distribution
 Request a VM from IT and install one of these:
 
@@ -35,12 +99,26 @@ software as containers. Please make sure you use a real Linux VM and an Enterpri
 grade Linux distribution.
 
 
-## Notes for Hyper/V 
-- Enable interface sharing: `Set-VMNetworkAdapter -MacAddressSpoofing On`
-- Create an external virtual switch for the VM.
+## Notes on RHEL-based Distributions
+RHEL, Alma, CentOS, Fedora Server, and SUSE ship with `firewalld` active. Docker manages its own `iptables` rules and generally coexists with `firewalld`, but conflicts can occur — particularly with macvlan networking and container-to-container traffic. If containers start successfully but cannot reach each other or the network, check `firewalld` first:
+
+```bash
+sudo systemctl status firewalld
+sudo firewall-cmd --list-all
+```
+
+
+## Notes for Hyper-V
+- Create an **External** virtual switch backed by the physical NIC — Internal and Private switches isolate the VM from the physical network, which prevents macvlan containers from receiving traffic.
+- Enable MAC address spoofing on the VM's network adapter: `Set-VMNetworkAdapter -VMName <vm> -MacAddressSpoofing On`
 
 
 ## Modify your SSH Configuration `~/.ssh/config`
+Edit your `~/.ssh/config`:
+
+- __Linux__: ~/.ssh/config
+- __Windows__: %USERPROFILE%\\.ssh\config
+
 Configure the SSH connection for your system:
 ```ssh-config
 Host containers
@@ -75,6 +153,8 @@ sudo docker ps
 # add yourself as to the `docker` admin
 sudo usermod -aG docker $USER
 logout
+# log back in — the docker group membership takes effect on your next session
+
 ```
 
 ## Utility Containers
@@ -129,7 +209,7 @@ services:
   studio:
     image: ghcr.io/vertigis/studio/base:latest
     environment:
-      # TODO: full public URL including /studio path
+      # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://apps.contoso.com
       # TODO: VertiGIS Account ID (from support)
       VERTIGIS_ACCOUNT_ID: account_id
@@ -157,21 +237,24 @@ Then choose a Caddyfile below based on how your certificates are provisioned.
 
 ### Caddyfile: Manual TLS
 
-Use this when IT provides a certificate (`server-crt.pem` / `server-key.pem`) directly. Place the PEM files in the `certs/` directory and reference them in the Caddyfile. `auto_https` is disabled because Caddy will not attempt ACME when TLS is configured manually.
+Use this when IT provides a certificate (`server-crt.pem` / `server-key.pem`) directly. Place the PEM files in the `certs/` directory and reference them in the Caddyfile.
 
 ```caddy
+{
+    # Prevents Caddy from automatically provisioning certificates for any named host.
+    auto_https off
+}
+
 apps.contoso.com {
     tls /certs/server-crt.pem /certs/server-key.pem
 
-    handle {
-        reverse_proxy http://studio:8080
-    }
+    reverse_proxy http://studio:8080
 }
 ```
 
 ### Configuration notes
 
-- **`FRONTEND_URL`**: The public HTTPS URL of this Studio deployment (e.g. `https://apps.contoso.com`). Studio uses this for OAuth redirects and internal link generation — wrong value breaks login.
+- **`FRONTEND_URL`**: The public HTTPS URL of this Studio deployment (e.g. `https://apps.contoso.com`). Host Studio at the root path — do not add a `/studio` or other suffix. Studio uses this for OAuth redirects and internal link generation — wrong value breaks login.
 - **`VERTIGIS_ACCOUNT_ID`**: Your VertiGIS license account ID. Obtain from VertiGIS support.
 - **`ARCGIS_PORTAL_URL`**: Base URL to your ArcGIS Enterprise Portal, including the `/portal` context (e.g. `https://portal.contoso.com/portal`).
 - **`ARCGIS_APP_ID`**: App ID from an ArcGIS application registered in your Portal. When registering, set the Redirect URL to the value of `FRONTEND_URL`.
@@ -219,14 +302,14 @@ services:
     networks:
       ingress:
         ipv4_address: 10.10.0.50
-        mac_address: "02:42:0a:0a:00:32"
+        mac_address: "02:ab:cd:ef:00:01"
       default: {}
     restart: unless-stopped
 
   studio:
     image: ghcr.io/vertigis/studio/base:latest
     environment:
-      # TODO: full public URL including /studio path
+      # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://apps.contoso.com
       # TODO: VertiGIS Account ID (from support)
       VERTIGIS_ACCOUNT_ID: account_id
@@ -271,23 +354,24 @@ configs:
 **Caddyfile**
 ```caddy
 {
+    # Prevents Caddy from automatically provisioning certificates for any named host.
+    auto_https off
     acme_ca https://acme.contoso.com/acme/directory
 }
 
 apps.contoso.com {
-    handle {
-        reverse_proxy http://studio:8080
-    }
+    tls
+    reverse_proxy http://studio:8080
 }
 ```
 
 ### Configuration notes
 
-- **`ipv4_address` / `mac_address`**: Assign a static IP and MAC that IT has reserved on the VLAN for this service. Use the MAC to get a consistent DHCP lease if you prefer DHCP over a static assignment.
+- **`ipv4_address` / `mac_address`**: Assign a static IP and MAC that IT has reserved on the VLAN for this service.
 - **`parent: eth0`**: Replace with the actual host interface name (`ip link` to find it). On Hyper-V, MAC address spoofing must be enabled on the VM network adapter.
 - **`subnet` / `gateway`**: Match your VLAN. Caddy's IP must fall inside the subnet and the gateway must be the VLAN's default gateway.
 - **`acme_ca`**: Replace with your organization's ACME directory URL. Caddy reads the system trust store, so once `ca-enroll` has populated `/etc/ssl/certs` the ACME server's certificate is automatically trusted.
-- **`ca_bundle.pem`**: Seed PEM containing at least the root and any intermediate CA certificates for your PKI. Caddy will not be able to reach the ACME server until this is populated.
+- **`ca_bundle.pem`**: Seed PEM containing at least the root and any intermediate CA certificates for your PKI. **This file must exist before running `docker compose up`** — Compose will refuse to start if the config source file is missing. The seed is foundational trust — `ca-enroll` can only distribute what it already has, so the seed must cover the CA that signed your ACME server's TLS certificate or Caddy will silently fail to reach it. Traditionally, CA certificates are distributed over plain HTTP to sidestep this bootstrapping problem, but that leaves one link in the chain unverified. Explicit seeding is the better approach: get the root PEM from IT once, place it here, and HTTPS can be used everywhere from the start.
 - **`FRONTEND_URL`**: The public HTTPS URL of this Studio deployment. Must exactly match the Redirect URL registered in ArcGIS Portal for `ARCGIS_APP_ID`.
 - **`ARCGIS_APP_ID`**: Register an application in your Portal, set its Redirect URL to `FRONTEND_URL`, and paste the resulting App ID here.
 - **`ca_dist:/etc/ssl/certs`** on Studio: Provides the internal CA bundle so Studio can validate HTTPS to ArcGIS Portal. Studio may restart once while `ca-enroll` initializes on first deploy.
@@ -327,12 +411,12 @@ services:
   dhcp-fw:
     image: ghcr.io/gpickell/starter-kit/dhcp-fw:latest
     environment:
-      DHCP_HOSTNAME: my-studio.contoso.com
+      DHCP_HOSTNAME: my-studio
     volumes:
       - dhcp_data:/var/lib/dhcpcd
     networks:
       ingress:
-        mac_address: "02:42:0a:0a:00:32"
+        mac_address: "02:ab:cd:ef:00:01"
       default: {}
     hostname: my-studio
     privileged: true
@@ -415,7 +499,7 @@ services:
   studio:
     image: ghcr.io/vertigis/studio/base:latest
     environment:
-      # TODO: full public URL including /studio path
+      # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://my-studio.contoso.com
       # TODO: VertiGIS Account ID (from support)
       VERTIGIS_ACCOUNT_ID: account_id
@@ -448,10 +532,6 @@ networks:
     driver: macvlan
     driver_opts:
       parent: eth0
-    ipam:
-      config:
-        - subnet: 10.10.0.0/24
-          gateway: 10.10.0.1
   default:
     driver: bridge
 
@@ -475,22 +555,24 @@ configs:
 
 **Caddyfile**
 ```caddy
+{
+    # Prevents Caddy from automatically provisioning certificates for any named host.
+    auto_https off
+}
+
 my-studio.contoso.com {
     tls /certs/server/cert/fullchain.pem /certs/server/cert/privkey.pem
 
-    handle {
-        reverse_proxy http://studio:8080
-    }
+    reverse_proxy http://studio:8080
 }
 ```
 
 ### Configuration notes
 
 - **`mac_address`**: Assign a MAC that is stable and, if your DHCP server is configured to do so, maps to a reserved IP. On Hyper-V, MAC address spoofing must be enabled on the VM network adapter (`Set-VMNetworkAdapter -MacAddressSpoofing On`).
-- **`parent: eth0`**: Replace with the actual host NIC name (`ip link` to find it). Must be the interface on the VLAN that Studio's IP will live on.
-- **`subnet` / `gateway`**: Match your VLAN. If IT assigns Caddy a static IP via DHCP reservation the gateway must be correct or `dhcp-fw` will lose the lease.
-- **`ca_bundle.pem`**: Seed PEM needed to bootstrap trust before `certsrv-ca` can run. Download the root CA from ADCS at `https://ca.contoso.com/certsrv/certcarc.asp` (no authentication required) or ask IT for the root PEM. Once `certsrv-ca` is running it fetches the full chain and `ca-enroll` keeps the bundle current.
-- **`kinit_secret`**: The account that can access AD CERTSRV and DNS.
+- **`parent: eth0`**: Replace with the actual host NIC name (`ip link` to find it). Must be the interface on the VLAN that Studio's IP will live on. No static subnet or gateway configuration is needed — `dhcp-fw` acquires the IP and routing via DHCP.
+- **`ca_bundle.pem`**: Seed PEM needed to bootstrap trust before `certsrv-ca` can run. **This file must exist before running `docker compose up`** — Compose will refuse to start if the config source file is missing. The seed is foundational trust — `ca-enroll` can only distribute what it already has, so the seed must include the CA that signed the CERTSRV server's own TLS certificate. If it does not, `certsrv-ca` silently fails to connect, nothing crashes, but the trust bundle never grows beyond the seed. Traditionally, CA certificates are distributed over plain HTTP to sidestep this bootstrapping problem, but that leaves one link in the chain unverified. Explicit seeding is the better approach: get the root PEM from IT once, place it here, and HTTPS can be used everywhere from the start. Once `certsrv-ca` is running it fetches the full chain and `ca-enroll` keeps the bundle current.
+- **`kinit_secret`**: Credentials for the service account that can access AD CERTSRV and DNS — provided by IT either way. The examples use a password file (`KINIT_SECRET_FILE`) because it maps most directly to a familiar username/password mental model. A keytab file (`KINIT_KEYTAB_FILE`) is generally preferred for production — it does not store a cleartext password and is the standard in most enterprise Kerberos environments. Ask IT which format they can provide; many AD teams will have a policy on this.
 - **`CERT_CA` / `CERTSRV_CA`**: Must be identical (`studio-web` above). Use a unique label per service so `certsrv-submit` routes requests to the right CA.
 - **`ALLOW_CIDRS`**: Tighten to the actual ranges Studio must reach — GIS tile services, license servers, LDAP/AD, SMTP, etc. `10.0.0.0/8` is a reasonable starting point for a private network; remove the RFC-1918 ranges that don't apply to your environment.
 - **First-time startup**: `cert-enroll` must complete enrollment before Caddy can serve HTTPS. Caddy will restart once or twice on first deploy while it waits for the certificate. The cert is persisted in `certs_data` so all subsequent restarts are immediate.

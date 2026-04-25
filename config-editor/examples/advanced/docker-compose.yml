@@ -6,12 +6,12 @@ services:
   dhcp-fw:
     image: ghcr.io/gpickell/starter-kit/dhcp-fw:latest
     environment:
-      DHCP_HOSTNAME: my-studio.contoso.com
+      DHCP_HOSTNAME: my-studio
     volumes:
       - dhcp_data:/var/lib/dhcpcd
     networks:
       ingress:
-        mac_address: "02:42:0a:0a:00:32"
+        mac_address: "02:ab:cd:ef:00:01"
       default: {}
     hostname: my-studio
     privileged: true
@@ -95,7 +95,7 @@ services:
   studio:
     image: ghcr.io/vertigis/studio/base:latest
     environment:
-      # TODO: full public URL including /studio path
+      # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://my-studio.contoso.com
       # TODO: VertiGIS Account ID (from support)
       VERTIGIS_ACCOUNT_ID: account_id
@@ -128,10 +128,6 @@ networks:
     driver: macvlan
     driver_opts:
       parent: eth0
-    ipam:
-      config:
-        - subnet: 10.10.0.0/24
-          gateway: 10.10.0.1
   default:
     driver: bridge
 

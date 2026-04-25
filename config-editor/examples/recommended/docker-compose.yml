@@ -25,14 +25,14 @@ services:
     networks:
       ingress:
         ipv4_address: 10.10.0.50
-        mac_address: "02:42:0a:0a:00:32"
+        mac_address: "02:ab:cd:ef:00:01"
       default: {}
     restart: unless-stopped
 
   studio:
     image: ghcr.io/vertigis/studio/base:latest
     environment:
-      # TODO: full public URL including /studio path
+      # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://apps.contoso.com
       # TODO: VertiGIS Account ID (from support)
       VERTIGIS_ACCOUNT_ID: account_id

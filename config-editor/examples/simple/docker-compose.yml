@@ -22,7 +22,7 @@ services:
   studio:
     image: ghcr.io/vertigis/studio/base:latest
     environment:
-      # TODO: full public URL including /studio path
+      # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://apps.contoso.com
       # TODO: VertiGIS Account ID (from support)
       VERTIGIS_ACCOUNT_ID: account_id

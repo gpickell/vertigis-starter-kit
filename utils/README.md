@@ -129,7 +129,7 @@ Useful when your CA is a Windows Active Directory Certificate Services (CERTSRV)
 | `KINIT_KEYTAB_FILE` | Path to Kerberos keytab file | Kerberos keytab |
 | `KINIT_SECRET_FILE` | Path to file containing Kerberos password | Kerberos password |
 
-Set `KINIT_PRINCIPAL` with either `KINIT_KEYTAB_FILE` (keytab) or `KINIT_SECRET_FILE` (password).
+Set `KINIT_PRINCIPAL` with either `KINIT_KEYTAB_FILE` (keytab) or `KINIT_SECRET_FILE` (password) — credentials provided by IT either way. Keytab is preferred for production; password is shown in examples for familiarity. Ask your AD team which format they can issue.
 
 ### Volumes
 
@@ -243,7 +243,7 @@ Useful when you want to automatically fulfill `cert-enroll` requests via Windows
 | `KINIT_KEYTAB_FILE` | Path to Kerberos keytab file | Kerberos keytab |
 | `KINIT_SECRET_FILE` | Path to file containing Kerberos password | Kerberos password |
 
-Set `KINIT_PRINCIPAL` with either `KINIT_KEYTAB_FILE` (keytab) or `KINIT_SECRET_FILE` (password).
+Set `KINIT_PRINCIPAL` with either `KINIT_KEYTAB_FILE` (keytab) or `KINIT_SECRET_FILE` (password) — credentials provided by IT either way. Keytab is preferred for production; password is shown in examples for familiarity. Ask your AD team which format they can issue.
 
 ### Pairing with `cert-enroll`
 Both containers must share the same `certs_data` volume. `CERTSRV_CA` must match the `CERT_CA` value in `cert-enroll`.
@@ -299,7 +299,7 @@ Useful when you want to manage network ingress for a container:
 
 | Variable | Description |
 |---|---|
-| `DHCP_HOSTNAME` | Hostname to advertise via DHCP |
+| `DHCP_HOSTNAME` | Short hostname to advertise via DHCP (e.g. `my-studio`, not a FQDN) |
 
 ### Volumes
 
@@ -314,7 +314,7 @@ services:
     image: ghcr.io/gpickell/starter-kit/dhcp-fw:latest
     environment:
       # the hostname to send via DHCP
-      DHCP_HOSTNAME: my-studio.contoso.com
+      DHCP_HOSTNAME: my-studio
     volumes:
       - dhcp_data:/var/lib/dhcpcd
     networks:
