@@ -18,6 +18,7 @@ target "image" {
     matrix = {
         item = [
             "config-editor",
+            "license-tool",
             "ca-enroll",
             "cert-enroll",
             "certsrv-ca",

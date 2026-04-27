@@ -124,7 +124,19 @@ Configure the SSH connection for your system:
 Host containers
     HostName containers-host-01.contoso.com
     User gary
-    LocalForward 127.0.0.1:8080 127.0.0.1:8080    
+    # config-tool
+    LocalForward 127.0.0.1:8080 127.0.0.1:8080
+    # license-tool
+    LocalForward 127.0.0.1:7780 127.0.0.1:7780
+```
+
+Use key-based authentication rather than a password. Key-based auth is stronger — a private key cannot be guessed or brute-forced the way a password can, and it eliminates the credential exposure that comes with typing a password over a network connection. It also means no password prompts:
+```bash
+# generate a key pair if you don't have one
+ssh-keygen -t ed25519
+
+# copy your public key to the container host
+ssh-copy-id containers
 ```
 
 
@@ -165,6 +177,7 @@ You do not need all of them.
 
 | Container | Purpose |
 |---|---|
+| [`license-tool`](utils/README.md#license-tool) | Retrieve your VertiGIS Account ID via a browser-based OAuth flow |
 | [`config-editor`](utils/README.md#config-editor) | Web UI to edit compose files, manage containers, and view logs — start here |
 | [`ca-enroll`](utils/README.md#ca-enroll) | Assemble and distribute a CA root trust bundle |
 | [`certsrv-ca`](utils/README.md#certsrv-ca) | Fetch CA certificates from Windows CERTSRV |
@@ -211,7 +224,7 @@ services:
     environment:
       # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://apps.contoso.com
-      # TODO: VertiGIS Account ID (from support)
+      # TODO: VertiGIS Account ID (run the license-tool image to retrieve)
       VERTIGIS_ACCOUNT_ID: account_id
       # TODO: ArcGIS Portal URL
       ARCGIS_PORTAL_URL: https://portal.contoso.com/portal
@@ -255,7 +268,7 @@ apps.contoso.com {
 ### Configuration notes
 
 - **`FRONTEND_URL`**: The public HTTPS URL of this Studio deployment (e.g. `https://apps.contoso.com`). Host Studio at the root path — do not add a `/studio` or other suffix. Studio uses this for OAuth redirects and internal link generation — wrong value breaks login.
-- **`VERTIGIS_ACCOUNT_ID`**: Your VertiGIS license account ID. Obtain from VertiGIS support.
+- **`VERTIGIS_ACCOUNT_ID`**: Your VertiGIS license account ID. Run the [`license-tool`](utils/README.md#license-tool) image to retrieve it.
 - **`ARCGIS_PORTAL_URL`**: Base URL to your ArcGIS Enterprise Portal, including the `/portal` context (e.g. `https://portal.contoso.com/portal`).
 - **`ARCGIS_APP_ID`**: App ID from an ArcGIS application registered in your Portal. When registering, set the Redirect URL to the value of `FRONTEND_URL`.
 - **`VERTIGIS_WORKERS`**: Number of parallel background jobs. Default `8` is suitable for most deployments; increase on high-core hosts.
@@ -311,7 +324,7 @@ services:
     environment:
       # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://apps.contoso.com
-      # TODO: VertiGIS Account ID (from support)
+      # TODO: VertiGIS Account ID (run the license-tool image to retrieve)
       VERTIGIS_ACCOUNT_ID: account_id
       # TODO: ArcGIS Portal URL
       ARCGIS_PORTAL_URL: https://portal.contoso.com/portal
@@ -501,7 +514,7 @@ services:
     environment:
       # TODO: full public HTTPS URL (root the site at /)
       FRONTEND_URL: https://my-studio.contoso.com
-      # TODO: VertiGIS Account ID (from support)
+      # TODO: VertiGIS Account ID (run the license-tool image to retrieve)
       VERTIGIS_ACCOUNT_ID: account_id
       # TODO: ArcGIS Portal URL
       ARCGIS_PORTAL_URL: https://portal.contoso.com/portal

@@ -62,6 +62,21 @@ volumes:
 ```
 
 
+## license-tool
+Useful when you need to look up your VertiGIS Account ID:
+- Authenticates with the VertiGIS identity service via a browser-based OAuth flow.
+- Prints your Account ID to stdout and exits.
+
+### Usage
+```sh
+docker run --rm -p 7780:7780 ghcr.io/gpickell/starter-kit/license-tool:latest
+```
+
+Open [http://localhost:7780/](http://localhost:7780/) in a browser. The container redirects you to the VertiGIS identity service, waits for the callback, prints your Account ID, and exits.
+
+> **Note:** If your Docker host is remote, enable the `LocalForward` for port 7780 in your SSH config before running this — see the commented line in the [SSH configuration section](../README.md#modify-your-ssh-configuration-sshconfig).
+
+
 ## ca-enroll
 Useful when you need to assemble and distribute a CA root trust bundle:
 - Consume CA trust anchors using Cert/PEM files.
