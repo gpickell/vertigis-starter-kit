@@ -24,9 +24,11 @@ services:
           subpath: ingress/Caddyfile
     networks:
       ingress:
+        interface_name: eth0
         ipv4_address: 10.10.0.50
         mac_address: "02:ab:cd:ef:00:01"
-      default: {}
+      default:
+        interface_name: eth1
     restart: unless-stopped
 
   studio:
@@ -42,6 +44,11 @@ services:
       ARCGIS_APP_ID: app_id
       VERTIGIS_PURGE: 1
       VERTIGIS_WORKERS: 8
+    networks:
+      default:
+        interface_name: eth0
+      private:
+        interface_name: eth1
     volumes:
       - data:/data
       - logs:/var/log
@@ -50,6 +57,8 @@ services:
     restart: unless-stopped
 
 networks:
+  default:
+    driver: bridge
   ingress:
     driver: macvlan
     driver_opts:
@@ -57,9 +66,10 @@ networks:
     ipam:
       config:
         - subnet: 10.10.0.0/24
-          gateway: 10.10.0.1
-  default:
+          gateway: 10.10.0.1    
+  private:
     driver: bridge
+    internal: true
 
 volumes:
   config:

@@ -314,9 +314,11 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     networks:
       ingress:
+        interface_name: eth0
         ipv4_address: 10.10.0.50
         mac_address: "02:ab:cd:ef:00:01"
-      default: {}
+      private:
+        interface_name: eth1
     restart: unless-stopped
 
   studio:
@@ -332,6 +334,11 @@ services:
       ARCGIS_APP_ID: app_id
       VERTIGIS_PURGE: 1
       VERTIGIS_WORKERS: 8
+    networks:
+      default:
+        interface_name: eth0
+      private:
+        interface_name: eth1
     volumes:
       - data:/data
       - logs:/var/log
@@ -340,6 +347,8 @@ services:
     restart: unless-stopped
 
 networks:
+  default:
+    driver: bridge
   ingress:
     driver: macvlan
     driver_opts:
@@ -348,8 +357,9 @@ networks:
       config:
         - subnet: 10.10.0.0/24
           gateway: 10.10.0.1
-  default:
+  private:
     driver: bridge
+    internal: true  
 
 volumes:
   caddy_data: {}
@@ -524,7 +534,7 @@ services:
       ARCGIS_APP_ID: app_id
       VERTIGIS_PURGE: 1
       VERTIGIS_WORKERS: 8
-    network:
+    networks:
       default:
         interface_name: eth0
       private:
