@@ -333,18 +333,25 @@ services:
     volumes:
       - dhcp_data:/var/lib/dhcpcd
     networks:
-      - ingress
-      - default
+      ingress:
+        interface_name: eth0
+        mac_address: "02:ab:cd:ef:00:01"
+      private:
+        interface_name: eth1      
     hostname: my-studio
     privileged: true
     restart: unless-stopped    
 
 networks:
-  default: {}
+  default:
+    driver: bridge
   ingress: 
     driver: macvlan
     driver_opts:
       parent: eth0
+  private:
+    driver: bridge
+    internal: true
 
 volumes:
   dhcp_data: {}
@@ -434,6 +441,7 @@ services:
       ALLOW_CIDRS: >
         10.0.0.0/8
         192.168.100.0/24
+        150.171.110.146/24
     # manage the outgoing network traffic for the app container
     network_mode: service:my-app
     privileged: true

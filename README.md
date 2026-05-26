@@ -429,8 +429,10 @@ services:
       - dhcp_data:/var/lib/dhcpcd
     networks:
       ingress:
+        interface_name: eth0
         mac_address: "02:ab:cd:ef:00:01"
-      default: {}
+      private:
+        interface_name: eth1
     hostname: my-studio
     privileged: true
     restart: unless-stopped
@@ -522,6 +524,11 @@ services:
       ARCGIS_APP_ID: app_id
       VERTIGIS_PURGE: 1
       VERTIGIS_WORKERS: 8
+    network:
+      default:
+        interface_name: eth0
+      private:
+        interface_name: eth1
     volumes:
       - data:/data
       - logs:/var/log
@@ -536,17 +543,21 @@ services:
         10.0.0.0/8
         172.16.0.0/12
         192.168.0.0/16
+        150.171.110.146/24
     network_mode: service:studio
     privileged: true
     restart: unless-stopped
 
 networks:
+  default:
+    driver: bridge
   ingress:
     driver: macvlan
     driver_opts:
       parent: eth0
-  default:
+  private:
     driver: bridge
+    internal: true
 
 volumes:
   dhcp_data: {}

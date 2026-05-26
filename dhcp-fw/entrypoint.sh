@@ -16,4 +16,4 @@ iptables -A INPUT -i eth0 -p tcp -j DROP
 ip addr flush dev eth0
 dbus-daemon --system --fork --nopidfile
 avahi-daemon --daemonize --no-chroot
-exec dhcpcd -B -L -4 -h "$DHCP_HOSTNAME" eth0
+exec dhcpcd --nohook resolv.conf -B -L -4 -h "$DHCP_HOSTNAME" eth0
